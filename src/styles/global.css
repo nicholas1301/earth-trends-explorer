@@ -27,6 +27,7 @@
   --font-display: "Bebas Neue", "Oswald", "Arial Narrow", Impact, sans-serif;
   --font-body: "Fira Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --header-h: 64px;
+  --stepper-h: 55px;
 }
 
 :root[data-theme="dark"] {
@@ -318,7 +319,7 @@ summary:hover { color: var(--red); }
 .tooltip .tooltip-title { color: var(--text); font-weight: 600; margin-bottom: 2px; }
 
 /* Guided-tour spotlight */
-.spotlight { outline: 2px solid var(--red); outline-offset: 6px; border-radius: 4px; scroll-margin-top: calc(var(--header-h) + 20px); }
+.spotlight { outline: 2px solid var(--red); outline-offset: 6px; border-radius: 4px; scroll-margin-top: calc(var(--header-h) + var(--stepper-h) + 20px); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

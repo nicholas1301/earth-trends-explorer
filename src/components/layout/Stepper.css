@@ -1,4 +1,13 @@
-.stepper { border-bottom: 1px solid var(--line); }
+/* Stays pinned under the sticky header so the current step is always visible (also while the guided tour scrolls). */
+.stepper {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 4;
+  min-height: var(--stepper-h);
+  background: var(--overlay);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
 
 .stepper ol {
   list-style: none;
