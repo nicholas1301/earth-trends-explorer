@@ -3,11 +3,13 @@ import { PRESETS } from "../../config/catalog";
 import { formatCoord } from "../../lib/format";
 import { isLand } from "../../lib/geo";
 import type { LatLon } from "../../lib/mapView";
-import { makePlace, placeFromPreset, samePlace } from "../../lib/places";
+import { reverseGeocode } from "../../lib/geocode";
+import { DEFAULT_PLACE_LABEL, makePlace, placeFromPreset, samePlace } from "../../lib/places";
 import { useGeolocation } from "../../hooks/useGeolocation";
 import { useInvestigation } from "../../state/InvestigationContext";
 import type { Place } from "../../types";
 import { GeoMap, type MapMarker } from "../charts/GeoMap";
+import { PlaceSearch } from "./PlaceSearch";
 import { SectionHeading } from "../ui/SectionHeading";
 import "./PlacePicker.css";
 
@@ -30,7 +32,9 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
   useEffect(() => {
     if (pickedOnMap.current) pickedOnMap.current = false;
     else setFlyTo((f) => ({ lat: place.lat, lon: place.lon, key: (f?.key ?? 0) + 1 }));
-  }, [place]);
+  }, [place.lat, place.lon]);
+
+  const lookingUp = usePlaceName(place, actions.setPlace);
 
   const choose = useCallback((p: Place) => actions.setPlace(p), [actions]);
   const geo = useGeolocation(useCallback((lat, lon) => choose(makePlace(lat, lon, undefined, MY_LOCATION)), [choose]));
@@ -77,7 +81,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
   return (
     <section id="q-place">
       <SectionHeading title="Where?" />
-      <p className="lead">Click anywhere on the globe, or pick one of the suggested places.</p>
+      <p className="lead">Search for any city, state or country, click anywhere on the globe, or pick one of the suggested places.</p>
 
       <div className="cols place-cols">
         <GeoMap
@@ -93,9 +97,23 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
         />
 
         <div className="place-panel">
+          <div className="place-find">
+            <PlaceSearch onSelect={(r) => choose({ ...makePlace(r.lat, r.lon, undefined, r.name), name: r.name, region: r.region })} />
+            <button
+              type="button"
+              className="locate-btn"
+              disabled={geo.status.kind === "asking"}
+              onClick={geo.locate}
+              title="Your browser will ask for permission first. The position is rounded to 0.1° (about 11 km) and is only used to query NASA data."
+            >
+              <span aria-hidden="true">📍</span>
+              {geo.status.kind === "asking" ? "Locating…" : "Use my location"}
+            </button>
+          </div>
+
           <div className="place-now">
             <h3>Selected place</h3>
-            <b>{place.name}</b>
+            <b>{lookingUp ? <span className="place-lookup">Finding place name…</span> : place.name}</b>
             <div className="muted">
               {place.region && `${place.region} · `}
               {description}
@@ -124,17 +142,6 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
             </div>
           </div>
 
-          <div className="row">
-            <button
-              type="button"
-              disabled={geo.status.kind === "asking"}
-              onClick={geo.locate}
-              title="Your browser will ask for permission first. The position is rounded to 0.1° (about 11 km) and is only used to query NASA data."
-            >
-              {geo.status.kind === "asking" ? "Locating…" : "Use my location"}
-            </button>
-          </div>
-
           <details>
             <summary>Type coordinates</summary>
             <div className="row" style={{ marginTop: 10 }}>
@@ -149,6 +156,48 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
       </div>
     </section>
   );
+}
+
+const LOOKUP_DELAY_MS = 400; // debounce: Nominatim allows at most one request per second
+
+/**
+ * Names points chosen on the map, by coordinates or by geolocation with their city/state
+ * (reverse geocoding). Returns true while the lookup is pending.
+ */
+function usePlaceName(place: Place, setPlace: (p: Place) => void): boolean {
+  const [lookingUp, setLookingUp] = useState(false);
+  const latest = useRef(place);
+  latest.current = place;
+
+  const isMine = place.name === MY_LOCATION;
+  const unnamed = !place.tag && !place.region && (place.name === DEFAULT_PLACE_LABEL || isMine);
+
+  useEffect(() => {
+    if (!unnamed) return;
+    const asked = { lat: place.lat, lon: place.lon, name: place.name };
+    const ctrl = new AbortController();
+    setLookingUp(!isMine);
+    const timer = setTimeout(() => {
+      reverseGeocode(asked.lat, asked.lon, ctrl.signal)
+        .then((r) => {
+          const cur = latest.current;
+          if (!r || !samePlace(cur, asked) || cur.name !== asked.name) return;
+          // Keep “Your location” as the title and put the city in the subtitle.
+          setPlace(isMine ? { ...cur, region: [r.name, r.region].filter(Boolean).join(", ") } : { ...cur, name: r.name, region: r.region });
+        })
+        .catch(() => {}) // offline or ocean: keep the generic label
+        .finally(() => {
+          if (!ctrl.signal.aborted) setLookingUp(false);
+        });
+    }, LOOKUP_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+      setLookingUp(false);
+    };
+  }, [unnamed, isMine, place.lat, place.lon, setPlace]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return lookingUp;
 }
 
 function GeolocationMessage({ status, onRetry }: { status: ReturnType<typeof useGeolocation>["status"]; onRetry(): void }) {

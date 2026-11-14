@@ -20,3 +20,60 @@
 .geo-message { margin-top: 6px; font-size: 14px; }
 .geo-message.error { color: var(--red); }
 .geo-message button { padding: 2px 8px; font-size: 12px; }
+
+.place-search { position: relative; }
+.place-search input {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.place-search-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  max-height: 320px;
+  overflow-y: auto;
+}
+.place-search-list li[role=option] {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.place-search-list li[aria-selected=true] { background: var(--card2); }
+.place-search-list .muted { font-size: 13px; }
+.place-search-name { font-weight: 600; }
+.place-search-note { padding: 8px 12px; font-size: 14px; }
+.place-search-note.error { color: var(--red); }
+
+.place-lookup { color: var(--muted); }
+
+.place-find { display: grid; gap: 10px; }
+.locate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--line-soft);
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+.locate-btn span { font-size: 17px; line-height: 1; }
+.locate-btn:hover:not(:disabled) { background: var(--card2); border-color: var(--text); }
