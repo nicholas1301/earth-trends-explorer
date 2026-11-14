@@ -16,8 +16,8 @@ export function Sparkline({ result: r }: { result: TrendOk }) {
 
   return (
     <svg width={W} height={H} aria-hidden="true">
-      <polyline points={points} fill="none" stroke="var(--s1)" strokeWidth={1.25} />
-      <line x1={X(x0)} y1={Y(sen(x0))} x2={X(x1)} y2={Y(sen(x1))} stroke="var(--s2)" strokeWidth={1.5} />
+      <polyline points={points} fill="none" stroke="var(--muted)" strokeWidth={1.25} />
+      <line x1={X(x0)} y1={Y(sen(x0))} x2={X(x1)} y2={Y(sen(x1))} stroke="var(--text)" strokeWidth={1.75} />
     </svg>
   );
 }

@@ -10,12 +10,12 @@ import { Legend } from "../ui/Legend";
 import { SectionHeading } from "../ui/SectionHeading";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Notice } from "../ui/Status";
-import { VerdictPanel } from "./VerdictPanel";
+import { StatTiles, VerdictPanel } from "./VerdictPanel";
 
 const VIEWS: { value: ChartView; label: string }[] = [
-  { value: "annual", label: "Annual means" },
+  { value: "annual", label: "Yearly" },
   { value: "monthly", label: "Monthly" },
-  { value: "anomaly", label: "Anomalies" },
+  { value: "anomaly", label: "Without seasons" },
 ];
 
 function seriesLabel(view: ChartView, season: Season): string {
@@ -25,32 +25,34 @@ function seriesLabel(view: ChartView, season: Season): string {
 
 function viewNote(view: ChartView, season: Season): string {
   if (view === "annual") {
-    return `Each point is the mean of one year${season.id === "year" ? "" : ` (${season.name})`}. The lines and tests use these points.`;
+    return `Each dot is the mean of one year${season.id === "year" ? "" : ` (${season.name})`}.`;
   }
   if (view === "anomaly") {
-    return "Anomaly = the month’s value minus the typical mean for that month in the period. The seasonal ups and downs disappear, and the underlying change shows.";
+    return "Each month compared with what is normal for that month, so the seasonal ups and downs disappear.";
   }
-  return "Month-by-month values, with the seasonal cycle. The trend lines come from the annual means.";
+  return "Month-by-month values, with the seasonal cycle. The trend line comes from the yearly means.";
 }
 
-/** Step 4: detailed look at the selected variable. */
-export function AnalysisSection({ analysis }: { analysis: Analysis }) {
+interface Props {
+  analysis: Analysis;
+  onBack(): void;
+  onNext(): void;
+  onHelp(): void;
+}
+
+/** Step 4: the verdict for the selected variable, then the evidence behind it. */
+export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
   const { state, actions } = useInvestigation();
   const { variable: v, result: r, season } = analysis;
   const investigation = state.investigation!;
   if (!v || !r) return null;
 
   return (
-    <section className="card" id="sec-chart">
-      <SectionHeading
-        step={4}
-        title={`${v.name} in ${investigation.place.name}`}
-        aside={<SegmentedControl label="Chart view" options={VIEWS} value={state.view} onChange={actions.setView} />}
-      />
-      <p className="muted">
-        {v.definition} <span className="tag">{v.source}</span>
-        <span className="tag">{v.unit}</span>
-      </p>
+    <section id="sec-chart" className="stack">
+      <div>
+        <SectionHeading title={`${v.name} in ${investigation.place.name}`} />
+        <p className="muted" style={{ margin: 0 }}>{v.definition}</p>
+      </div>
 
       {!r.ok ? (
         <Notice>
@@ -59,41 +61,60 @@ export function AnalysisSection({ analysis }: { analysis: Analysis }) {
         </Notice>
       ) : (
         <>
-          <Legend
-            items={[
-              { color: "var(--s1)", label: seriesLabel(state.view, season) },
-              { color: "var(--s2)", label: "Regression line" },
-              { shape: "box", color: "var(--s2)", opacity: 0.35, label: "95% confidence band" },
-              { shape: "dash", color: "var(--s3)", label: "Sen’s slope" },
-            ]}
-          />
-          <TimeSeriesChart
-            variable={v}
-            result={r}
-            grid={investigation.data[v.id]}
-            months={season.months}
-            y0={state.filters.y0}
-            y1={state.filters.y1}
-            view={state.view}
-            seriesLabel={seriesLabel(state.view, season)}
-          />
-          <p className="muted" style={{ marginTop: 6 }}>{viewNote(state.view, season)}</p>
+          <VerdictPanel variable={v} result={r} place={investigation.place} season={season} onHelp={onHelp} />
 
-          <VerdictPanel variable={v} result={r} place={investigation.place} season={season} />
+          <div className="analysis-block">
+            <h3>
+              The evidence, year by year
+              <SegmentedControl label="Chart view" options={VIEWS} value={state.view} onChange={actions.setView} />
+            </h3>
+            <Legend
+              items={[
+                { color: "var(--s1)", label: seriesLabel(state.view, season) },
+                { color: "var(--s2)", label: "Trend line" },
+                { shape: "box", color: "var(--s2)", opacity: 0.3, label: "Uncertainty of the trend (95%)" },
+                { shape: "dash", color: "var(--s3)", label: "Second estimate (Sen’s slope)" },
+              ]}
+            />
+            <TimeSeriesChart
+              variable={v}
+              result={r}
+              grid={investigation.data[v.id]}
+              months={season.months}
+              y0={state.filters.y0}
+              y1={state.filters.y1}
+              view={state.view}
+              seriesLabel={seriesLabel(state.view, season)}
+            />
+            <p className="muted" style={{ margin: 0 }}>
+              {viewNote(state.view, season)} If a flat line fits inside the shaded band, the trend may be just chance.
+            </p>
+          </div>
 
-          <div style={{ marginTop: 18 }}>
+          <div className="analysis-block">
             <h3>In which months does the change happen?</h3>
-            <p className="muted">Trend calculated separately for each month of the year (Sen’s slope, per decade).</p>
             <MonthlyTrendBars variable={v} grid={investigation.data[v.id]} y0={state.filters.y0} y1={state.filters.y1} />
           </div>
 
-          <ExportActions variable={v} result={r} />
           <details>
-            <summary>View data as a table</summary>
+            <summary>Show the statistics</summary>
+            <StatTiles variable={v} result={r} />
+            <p className="muted" style={{ marginTop: 10 }}>
+              Source: {v.source} · unit: {v.unit}
+            </p>
+          </details>
+          <details>
+            <summary>Show the data and export</summary>
+            <ExportActions variable={v} result={r} />
             <DataTable variable={v} result={r} />
           </details>
         </>
       )}
+
+      <div className="step-nav">
+        <button type="button" onClick={onBack}>← All clues</button>
+        <button type="button" className="primary" onClick={onNext}>Where is it changing? →</button>
+      </div>
     </section>
   );
 }
@@ -116,9 +137,9 @@ function ExportActions({ variable: v, result: r }: { variable: Variable; result:
   };
 
   return (
-    <div className="row" style={{ marginTop: 14 }}>
-      <button type="button" onClick={downloadCsv}>⬇ Download CSV</button>
-      <button type="button" onClick={copyLink}>🔗 Copy link to this investigation</button>
+    <div className="row" style={{ marginTop: 12 }}>
+      <button type="button" onClick={downloadCsv}>Download CSV</button>
+      <button type="button" onClick={copyLink}>Copy link to this investigation</button>
       <span className="muted" role="status">{message}</span>
     </div>
   );
@@ -126,13 +147,13 @@ function ExportActions({ variable: v, result: r }: { variable: Variable; result:
 
 function DataTable({ variable: v, result: r }: { variable: Variable; result: TrendOk }) {
   return (
-    <div className="table-scroll" style={{ maxHeight: 320, overflow: "auto", marginTop: 8 }}>
+    <div className="table-scroll" style={{ maxHeight: 320, overflow: "auto", marginTop: 12 }}>
       <table>
         <thead>
           <tr>
             <th>Year</th>
             <th className="num">{v.name} ({v.unit})</th>
-            <th className="num">Regression line</th>
+            <th className="num">Trend line</th>
             <th className="num">Difference</th>
           </tr>
         </thead>

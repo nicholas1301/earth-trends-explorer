@@ -6,7 +6,7 @@ import { makePlace } from "../lib/places";
 import { describeError, fetchPoint } from "../lib/powerApi";
 import type { TrendResult } from "../lib/trend";
 import { readHash, writeHash } from "../lib/urlHash";
-import type { ChartView, Filters, Place, Season, ThemeId, Variable, WhereTab } from "../types";
+import type { ChartView, Filters, Place, Season, Step, ThemeId, Variable, WhereTab } from "../types";
 import { initialState, reducer, type Action, type State } from "./reducer";
 
 interface InvestigateOptions {
@@ -17,6 +17,7 @@ interface InvestigateOptions {
 }
 
 export interface Actions {
+  goTo(step: Step): void;
   setTheme(theme: ThemeId): void;
   setPlace(place: Place): void;
   setFilters(filters: Partial<Filters>): void;
@@ -89,6 +90,7 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
     };
 
     return {
+      goTo: (step) => dispatch({ type: "setStep", step }),
       setTheme: (theme) => dispatch({ type: "setTheme", theme }),
       setPlace: (place) => dispatch({ type: "setPlace", place }),
       setFilters: (filters) => dispatch({ type: "setFilters", filters }),
@@ -114,6 +116,7 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
     actions.setFilters(shared.filters);
     const place = makePlace(shared.lat, shared.lon);
     actions.setPlace(place);
+    actions.goTo("verdict");
     void actions.investigate({ place, variable: shared.variable });
   }, [actions]);
 

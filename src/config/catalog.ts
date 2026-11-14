@@ -6,12 +6,12 @@ export const LAST_YEAR = new Date().getFullYear() - 1;
 export const MIN_SPAN = 9;
 
 export const THEMES: Theme[] = [
-  { id: "heat", icon: "🌡️", name: "Heat and cold", description: "Air and surface temperatures, nights, days and frosts." },
-  { id: "water", icon: "🌧️", name: "Rain and drought", description: "Rainfall, soil moisture and evaporation — the water cycle on land." },
-  { id: "ice", icon: "❄️", name: "Snow and ice", description: "Accumulated snow, frost days and the cold that sustains them." },
-  { id: "sun", icon: "☀️", name: "Sun and clouds", description: "How much sunlight reaches the ground, and what blocks it: clouds and particles." },
-  { id: "wind", icon: "💨", name: "Wind and pressure", description: "Air circulation near the surface." },
-  { id: "air", icon: "🫧", name: "Air composition", description: "Water vapor, suspended particles and the ozone layer." },
+  { id: "heat", name: "Heat and cold", description: "Air and surface temperatures, nights, days and frosts." },
+  { id: "water", name: "Rain and drought", description: "Rainfall, soil moisture and evaporation — the water cycle on land." },
+  { id: "ice", name: "Snow and ice", description: "Accumulated snow, frost days and the cold that sustains them." },
+  { id: "sun", name: "Sun and clouds", description: "How much sunlight reaches the ground, and what blocks it: clouds and particles." },
+  { id: "wind", name: "Wind and pressure", description: "Air circulation near the surface." },
+  { id: "air", name: "Air composition", description: "Water vapor, suspended particles and the ozone layer." },
 ];
 
 export const themeById = (id: ThemeId): Theme => THEMES.find((t) => t.id === id) ?? THEMES[0];

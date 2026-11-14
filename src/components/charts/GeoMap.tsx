@@ -46,8 +46,8 @@ const GRATICULE: MultiLineString = {
   ],
 };
 const MODES: { value: MapMode; label: string }[] = [
-  { value: "globe", label: "🌐 Globe" },
-  { value: "flat", label: "🗺️ Flat" },
+  { value: "globe", label: "Globe" },
+  { value: "flat", label: "Flat" },
 ];
 const DRAG_THRESHOLD_PX = 4;
 
@@ -230,18 +230,12 @@ export function GeoMap({ label, initialMode, initialCenter, markers, onPick, fly
         onKeyDown={onKeyDown}
       >
         <defs>
-          <radialGradient id={`${ids}-ocean`} cx="40%" cy="36%" r="70%">
-            <stop offset="0" stopColor="#1c2a3d" />
-            <stop offset=".75" stopColor="#121b28" />
-            <stop offset="1" stopColor="#0b1119" />
-          </radialGradient>
           <radialGradient id={`${ids}-shade`} cx="50%" cy="50%" r="50%">
             <stop offset=".86" stopColor="#000" stopOpacity="0" />
-            <stop offset="1" stopColor="#000" stopOpacity=".45" />
+            <stop offset="1" stopColor="#000" stopOpacity=".16" />
           </radialGradient>
         </defs>
-        {isGlobe && <circle className="geo-halo" cx={center.x} cy={center.y} r={r + 3} />}
-        <path className="geo-sphere" d={paths.sphere} fill={`url(#${ids}-ocean)`} />
+        <path className="geo-sphere" d={paths.sphere} />
         <path className="geo-graticule" d={paths.graticule} />
         <path className="geo-land" d={paths.land} />
         {isGlobe && <circle cx={center.x} cy={center.y} r={r} fill={`url(#${ids}-shade)`} pointerEvents="none" />}
@@ -273,7 +267,7 @@ export function GeoMap({ label, initialMode, initialCenter, markers, onPick, fly
         <button type="button" title="Reset view" aria-label="Reset view" onClick={goHome}>⌂</button>
       </span>
       <div className="geo-readout">{readout}</div>
-      <div className="geo-hint">drag · scroll to zoom · double-click to dive in</div>
+      <div className="geo-hint">drag to spin · scroll to zoom · click to choose</div>
     </div>
   );
 }

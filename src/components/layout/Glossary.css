@@ -1,8 +1,0 @@
-.glossary {
-  margin: 10px 0 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 10px 20px;
-}
-.glossary dt { font-weight: 600; }
-.glossary dd { margin: 0; color: var(--muted); font-size: 13px; }

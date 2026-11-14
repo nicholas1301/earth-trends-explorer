@@ -1,12 +1,22 @@
-.place-now {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--card2);
-}
-.place-now b { font-size: 15px; }
+.place-cols { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); margin-bottom: 24px; }
+.place-panel { display: grid; gap: 20px; }
 
-.geo-message { margin-top: 4px; font-size: 13px; }
-.geo-message.error { color: var(--warm); }
+.place-now {
+  padding: 16px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+}
+.place-now b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.place-now .primary { margin-top: 14px; width: 100%; }
+
+.geo-message { margin-top: 6px; font-size: 14px; }
+.geo-message.error { color: var(--red); }
 .geo-message button { padding: 2px 8px; font-size: 12px; }

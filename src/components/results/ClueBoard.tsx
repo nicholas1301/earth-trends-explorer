@@ -1,111 +1,110 @@
+import { useState } from "react";
 import { VARIABLES, themeById } from "../../config/catalog";
 import { decreaseColor, increaseColor } from "../../lib/colors";
 import { formatNumber, formatPValue, formatSigned } from "../../lib/format";
-import { LEVEL_LABELS, isSignificant, perDecade, type TrendResult } from "../../lib/trend";
+import { LEVEL_LABELS, SIGNIFICANT, isSignificant, perDecade, type TrendResult } from "../../lib/trend";
 import { useInvestigation, type Analysis } from "../../state/InvestigationContext";
 import type { Variable } from "../../types";
 import { Sparkline } from "../charts/Sparkline";
 import { SectionHeading } from "../ui/SectionHeading";
 import "./ClueBoard.css";
 
-/** Step 3: every variable ranked by theme, typical clues and strength of evidence. */
-export function ClueBoard({ analysis, onSelect }: { analysis: Analysis; onSelect(id: string): void }) {
+interface Props {
+  analysis: Analysis;
+  onSelect(id: string): void;
+  onBack(): void;
+}
+
+/** Step 3: the variables of the chosen topic, then whatever else is clearly changing in this place. */
+export function ClueBoard({ analysis, onSelect, onBack }: Props) {
   const { state } = useInvestigation();
-  const { scan, ranked, hints, season } = analysis;
+  const [showAll, setShowAll] = useState(false);
+  const { scan, ranked, hints } = analysis;
   const theme = themeById(state.theme);
-  const place = state.investigation!.place;
-  const placeKind = place.tag ?? state.investigation!.profile.kind;
+  const { place, profile } = state.investigation!;
   const nSignificant = VARIABLES.filter((v) => isSignificant(scan[v.id])).length;
 
+  const inTheme = ranked.filter((v) => v.themes.includes(state.theme));
+  const others = ranked.filter((v) => !v.themes.includes(state.theme));
+  const notable = others.filter((v) => isSignificant(scan[v.id]));
+  const hidden = others.length - notable.length;
+
+  const row = (v: Variable) => (
+    <ClueRow key={v.id} variable={v} result={scan[v.id]} selected={v.id === state.variable} typical={hints.has(v.id)} onSelect={onSelect} />
+  );
+
   return (
-    <section className="card" id="sec-clues">
-      <SectionHeading step={3} title="Clue board" aside="click a row to investigate" />
-      <p className="muted">
-        We tested <b className="hl">{VARIABLES.length} variables</b> in {place.name} ({state.filters.y0}–{state.filters.y1},{" "}
-        {season.name.toLowerCase()}): <b className="hl">{nSignificant}</b> have a significant trend. Variables from the “
-        {theme.name}” theme come first, then typical clues for a <i>{placeKind}</i> place, always from the strongest
-        evidence to the weakest.
+    <section id="sec-clues">
+      <SectionHeading title={`Clues in ${place.name}`} />
+      <p className="lead">
+        We tested {VARIABLES.length} variables: <b className="hl">{nSignificant}</b> {nSignificant === 1 ? "shows" : "show"} a significant
+        trend. Pick one to see the evidence.
       </p>
-      <div className="table-scroll">
-        <table className="clue-table">
-          <thead>
-            <tr>
-              <th>Variable</th>
-              <th>Annual mean</th>
-              <th className="num">Rate per decade</th>
-              <th>Verdict</th>
-              <th>Evidence</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ranked.map((v) => {
-              const r = scan[v.id];
-              const select = () => onSelect(v.id);
-              return (
-                <tr
-                  key={v.id}
-                  tabIndex={0}
-                  className={v.id === state.variable ? "selected" : undefined}
-                  onClick={select}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); }
-                  }}
-                >
-                  <td>
-                    <span className="var-name">{v.name}</span>
-                    {v.themes.includes(state.theme) && <span className="tag">{theme.icon} theme</span>}
-                    {hints.has(v.id) && (
-                      <span className="tag" title="Variable that usually yields good clues in places of this type">★ typical clue</span>
-                    )}
-                    <div className="var-def">{v.definition}</div>
-                  </td>
-                  <td>{r.ok && <Sparkline result={r} />}</td>
-                  <td className="num">
-                    {r.ok ? (
-                      <>
-                        {formatSigned(perDecade(r), v.digits)} <small className="muted">{v.unit}</small>
-                      </>
-                    ) : "—"}
-                  </td>
-                  <td><VerdictBadge result={r} variable={v} /></td>
-                  <td><EvidenceDots result={r} /></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <p className="muted">
+        This place: {place.tag ?? profile.kind} · {formatNumber(profile.meanTemp, 1)} °C on average · {formatNumber(profile.annualRain, 0)} mm
+        of rain per year
+      </p>
+
+      <h3 className="clue-group">{theme.name}</h3>
+      <div className="clues">{inTheme.map(row)}</div>
+
+      <h3 className="clue-group">Also changing here</h3>
+      {!notable.length && !showAll && <p className="muted">No other variable shows a significant trend.</p>}
+      <div className="clues">{(showAll ? others : notable).map(row)}</div>
+      {hidden > 0 && (
+        <button type="button" className="link" onClick={() => setShowAll(!showAll)}>
+          {showAll ? "Show only significant trends" : `Show the other ${hidden} variables`}
+        </button>
+      )}
+
+      <div className="step-nav" style={{ marginTop: 24 }}>
+        <button type="button" onClick={onBack}>← Place</button>
       </div>
     </section>
   );
 }
 
-function VerdictBadge({ result: r, variable: v }: { result: TrendResult; variable: Variable }) {
-  if (!r.ok) {
-    return <span className="verdict-badge flat"><i>·</i><small>insufficient data</small></span>;
-  }
-  const kind = r.direction > 0 ? "up" : r.direction < 0 ? "down" : "flat";
-  const icon = { up: "▲", down: "▼", flat: "■" }[kind];
-  const word = { up: "rising", down: "falling", flat: "stable" }[kind];
-  const color = r.direction > 0 ? increaseColor(v) : r.direction < 0 ? decreaseColor(v) : undefined;
+interface RowProps {
+  variable: Variable;
+  result: TrendResult;
+  selected: boolean;
+  /** Variable that usually yields good clues in places of this type. */
+  typical: boolean;
+  onSelect(id: string): void;
+}
+
+function ClueRow({ variable: v, result: r, selected, typical, onSelect }: RowProps) {
   return (
-    <span className={`verdict-badge ${kind}`}>
-      <i style={{ color }}>{icon}</i>
-      {word}
-      {r.direction !== 0 && <small> · {LEVEL_LABELS[r.level]}</small>}
-    </span>
+    <button type="button" className="clue" aria-current={selected || undefined} onClick={() => onSelect(v.id)}>
+      <span className="clue-main">
+        <span className="clue-name">
+          {v.name}
+          {typical && <span className="tag" title="Usually a good clue in places of this type">typical here</span>}
+        </span>
+        <span className="clue-def">{v.definition}</span>
+      </span>
+      <span className="clue-spark">{r.ok && <Sparkline result={r} />}</span>
+      <Verdict result={r} variable={v} />
+      <span className="clue-go" aria-hidden="true">→</span>
+    </button>
   );
 }
 
-function EvidenceDots({ result: r }: { result: TrendResult }) {
-  if (!r.ok) return <>—</>;
-  const max = LEVEL_LABELS.length - 1;
+function Verdict({ result: r, variable: v }: { result: TrendResult; variable: Variable }) {
+  if (!r.ok) return <span className="clue-verdict weak">Not enough data</span>;
+  const kind = r.direction > 0 ? "up" : r.direction < 0 ? "down" : "flat";
+  const icon = { up: "▲", down: "▼", flat: "■" }[kind];
+  const word = { up: "Rising", down: "Falling", flat: "Stable" }[kind];
+  const color = r.direction > 0 ? increaseColor(v) : r.direction < 0 ? decreaseColor(v) : undefined;
   return (
-    <>
-      <span className="evidence-dots" title={`Mann-Kendall: Z = ${formatNumber(r.mk.Z, 2)}, ${formatPValue(r.mk.p)}`}>
-        {"●".repeat(r.level)}
-        <s>{"●".repeat(max - r.level)}</s>
-      </span>{" "}
-      <small className="muted">{formatPValue(r.mk.p)}</small>
-    </>
+    <span className={`clue-verdict${r.level >= SIGNIFICANT ? "" : " weak"}`} title={`Mann-Kendall: Z = ${formatNumber(r.mk.Z, 2)}, ${formatPValue(r.mk.p)}`}>
+      <span>
+        <i style={{ color }}>{icon}</i> {word}
+        {r.direction !== 0 && <> · {LEVEL_LABELS[r.level]}</>}
+      </span>
+      <small>
+        {formatSigned(perDecade(r), v.digits)} {v.unit} per decade
+      </small>
+    </span>
   );
 }

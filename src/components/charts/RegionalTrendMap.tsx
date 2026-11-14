@@ -94,7 +94,7 @@ export function RegionalTrendMap({ variable: v }: { variable: Variable }) {
   const viewBox = `${(lons[0] - dx / 2) * kx} ${-(lats[lats.length - 1] + dy / 2)} ${(lons[lons.length - 1] - lons[0] + dx) * kx} ${lats[lats.length - 1] - lats[0] + dy}`;
 
   return (
-    <div className={`cols${loading ? " dimmed" : ""}`} style={{ gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)" }}>
+    <div className={`cols${loading ? " dimmed" : ""}`}>
       <div>
         <svg className="map" viewBox={viewBox} style={{ maxWidth: 640, maxHeight: "70vh", margin: "0 auto", background: "none" }} role="img" aria-label="Trend map around the point">
           <g transform={`scale(${kx} 1)`}>
@@ -112,13 +112,13 @@ export function RegionalTrendMap({ variable: v }: { variable: Variable }) {
                 onClick={() => { tooltip.hide(); void actions.investigateAt(c.lat, c.lon); }}
               />
             ))}
-            <path d={LAND_PATH} fill="none" fillRule="evenodd" stroke="var(--text)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" pointerEvents="none" opacity={0.8} />
+            <path d={LAND_PATH} fill="none" fillRule="evenodd" stroke="var(--text)" strokeWidth={1.25} vectorEffect="non-scaling-stroke" pointerEvents="none" opacity={0.7} />
           </g>
           {/* Drawn outside the scaled group so circles stay round. */}
           {analyzed.filter((c) => isSignificant(c.result)).map((c) => (
-            <circle key={`s${c.lat},${c.lon}`} cx={c.lon * kx} cy={-c.lat} r={dotRadius} fill="#fff" opacity={0.85} pointerEvents="none" />
+            <circle key={`s${c.lat},${c.lon}`} cx={c.lon * kx} cy={-c.lat} r={dotRadius} fill="var(--text)" opacity={0.85} pointerEvents="none" />
           ))}
-          <circle cx={place.lon * kx} cy={-place.lat} r={0.28} fill="none" stroke="#fff" strokeWidth={2} vectorEffect="non-scaling-stroke" pointerEvents="none" />
+          <circle cx={place.lon * kx} cy={-place.lat} r={0.28} fill="none" stroke="var(--text)" strokeWidth={2.5} vectorEffect="non-scaling-stroke" pointerEvents="none" />
         </svg>
         <DivergingScale variable={v} max={scaleMax} />
       </div>
@@ -133,7 +133,7 @@ export function RegionalTrendMap({ variable: v }: { variable: Variable }) {
           {areaMean && <> Mean of the whole area: {formatSigned(areaMean.sen * 10, v.digits)} {v.unit}/decade ({formatPValue(areaMean.p)}).</>}
         </p>
         <p className="muted">
-          Each square is a grid cell ({formatNumber(dy, dy % 1 ? 1 : 0)}° × {formatDegrees(dx)}°). The white ring marks {place.name}; the light
+          Each square is a grid cell ({formatNumber(dy, dy % 1 ? 1 : 0)}° × {formatDegrees(dx)}°). The ring marks {place.name}; the thin
           lines are the coastline. Hover to see the values, click a cell to investigate it.
         </p>
       </div>

@@ -1,0 +1,36 @@
+.hero { padding: clamp(24px, 7vh, 72px) 0 clamp(20px, 5vh, 48px); }
+.hero h2 { font-size: clamp(52px, 10vw, 112px); line-height: .92; margin-bottom: 20px; display: block; }
+.hero .lead { font-size: 19px; margin-bottom: 26px; }
+
+.demos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.demo {
+  text-align: left;
+  padding: 16px;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.demo svg { margin-bottom: 6px; }
+.demo b { font-family: var(--font-display); font-weight: 400; font-size: 24px; line-height: 1.05; letter-spacing: .02em; text-transform: uppercase; }
+.demo span { color: var(--muted); font-size: 14px; }
+.demo .go { margin-top: 8px; color: var(--text); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.demo:hover .go { color: var(--red); }
+
+.app-footer {
+  border-top: 1px solid var(--line);
+  padding: 22px 20px 40px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 20px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+.app-footer .space-apps-logo { height: 44px; }

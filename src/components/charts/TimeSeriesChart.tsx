@@ -134,7 +134,7 @@ export function TimeSeriesChart(props: Props) {
         <line className="axis" x1={L} x2={W - R} y1={H - B} y2={H - B} />
         {view === "anomaly" && lo < 0 && hi > 0 && <line className="axis" x1={L} x2={W - R} y1={Y(0)} y2={Y(0)} />}
 
-        <path d={bandPath} fill="var(--s2)" opacity={0.16} />
+        <path d={bandPath} fill="var(--s2)" opacity={0.14} />
         <path d={seriesPath} fill="none" stroke="var(--s1)" strokeWidth={view === "annual" ? 2 : 1.25} strokeLinejoin="round" />
         {view === "annual" &&
           points.map((p) => <circle key={p.x} cx={X(p.x)} cy={Y(p.y)} r={4} fill="var(--s1)" stroke="var(--card)" strokeWidth={2} />)}
@@ -145,7 +145,7 @@ export function TimeSeriesChart(props: Props) {
         {hover && (
           <>
             <line className="axis" x1={X(hover.x)} x2={X(hover.x)} y1={T} y2={H - B} />
-            <circle cx={X(hover.x)} cy={Y(hover.y)} r={5} fill="var(--s1)" stroke="#fff" strokeWidth={1.5} />
+            <circle cx={X(hover.x)} cy={Y(hover.y)} r={5} fill="var(--red)" stroke="var(--bg)" strokeWidth={1.5} />
           </>
         )}
         <rect x={L} y={T} width={W - L - R} height={H - T - B} fill="transparent" onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} />

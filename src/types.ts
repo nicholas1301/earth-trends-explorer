@@ -8,7 +8,6 @@ export type IncreaseColor = "red" | "blue";
 
 export interface Theme {
   id: ThemeId;
-  icon: string;
   name: string;
   description: string;
 }
@@ -50,6 +49,8 @@ export interface Season {
 
 export type ChartView = "annual" | "monthly" | "anomaly";
 export type WhereTab = "region" | "world";
+/** Screens of the investigation, in order. Each one shows a single step of the journey. */
+export type Step = "home" | "theme" | "place" | "clues" | "verdict" | "compare";
 
 export interface Filters {
   y0: number;

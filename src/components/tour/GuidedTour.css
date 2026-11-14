@@ -5,19 +5,28 @@
   transform: translateX(-50%);
   width: min(720px, calc(100% - 24px));
   z-index: 30;
-  background: #0b0f15;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 12px 14px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, .6);
+  background: var(--text);
+  color: var(--inverse);
+  border-radius: 4px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
 }
 
 .tour-title {
   font-size: 11px;
-  letter-spacing: .1em;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
+  opacity: .7;
 }
 
-.tour p { margin: 4px 0 10px; font-size: 14px; }
+.tour p { margin: 4px 0 12px; font-size: 15px; }
+
+.tour button { color: var(--inverse); border-color: color-mix(in srgb, var(--inverse) 45%, transparent); }
+.tour button:hover { border-color: var(--inverse); }
+.tour button.primary { background: var(--inverse); border-color: var(--inverse); color: var(--text); }
+.tour button.primary:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.tour .spinner { border-color: color-mix(in srgb, var(--inverse) 35%, transparent); border-top-color: var(--inverse); }
+
+/* Leave room for the tour panel so it never covers the end of the page. */
+body:has(.tour) main { padding-bottom: 220px; }

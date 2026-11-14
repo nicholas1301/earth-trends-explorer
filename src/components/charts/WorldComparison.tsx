@@ -110,10 +110,10 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
           <circle
             r={significant ? 9 : 7}
             fill={divergingColor(clamp((perDecade(p.result) / max) * sign * MAP_BOOST, -1, 1))}
-            stroke={p.isCurrent ? "#fff" : "#0b0f15"}
+            stroke={p.isCurrent ? "var(--text)" : "var(--bg)"}
             strokeWidth={p.isCurrent ? 2.5 : 1.3}
           />
-          {significant && <circle r={2.4} fill="#fff" pointerEvents="none" />}
+          {significant && <circle r={2.4} fill="var(--text)" pointerEvents="none" />}
         </>
       ),
     };

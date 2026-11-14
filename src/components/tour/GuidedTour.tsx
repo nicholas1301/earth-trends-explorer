@@ -17,6 +17,7 @@ export function GuidedTour({ demo, onClose }: { demo: Demo; onClose(): void }) {
     const forward = next > index;
     const id = ++runId.current;
     setIndex(next);
+    actions.goTo(steps[next].step);
     const run = steps[next].run;
     if (run && forward) {
       setBusy(true);
@@ -42,7 +43,9 @@ export function GuidedTour({ demo, onClose }: { demo: Demo; onClose(): void }) {
     const el = document.getElementById(target);
     if (!el) return;
     el.classList.add("spotlight");
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Tall targets start at the top so their heading stays visible; small ones are centred above the tour panel.
+    const tall = el.getBoundingClientRect().height > window.innerHeight * 0.55;
+    el.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "center" });
     return () => el.classList.remove("spotlight");
   }, [target, analysis]);
 

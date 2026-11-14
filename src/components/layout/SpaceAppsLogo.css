@@ -1,0 +1,5 @@
+.space-apps-logo { display: inline-flex; }
+.space-apps-logo img { display: block; height: 100%; width: auto; }
+.space-apps-logo .on-dark { display: none; }
+:root[data-theme="dark"] .space-apps-logo .on-light { display: none; }
+:root[data-theme="dark"] .space-apps-logo .on-dark { display: block; }

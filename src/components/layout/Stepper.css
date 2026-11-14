@@ -1,0 +1,59 @@
+.stepper { border-bottom: 1px solid var(--line); }
+
+.stepper ol {
+  list-style: none;
+  margin: 0 auto;
+  padding: 10px 20px;
+  max-width: 1080px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper li { display: flex; align-items: center; gap: 8px; }
+.stepper li + li { flex: 1; }
+/* Connector between steps. */
+.stepper li + li::before {
+  content: "";
+  flex: 1;
+  min-width: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+.stepper li.done + li::before,
+.stepper li.done::before { border-top-color: var(--text); }
+
+.stepper button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-size: 12px;
+  letter-spacing: 0;
+  flex: none;
+}
+
+.stepper li.done button { color: var(--text); }
+.stepper button[aria-current] { color: var(--text); }
+.stepper button[aria-current] .step-number { background: var(--text); border-color: var(--text); color: var(--inverse); }
+.stepper button:not(:disabled):hover .step-number { border-color: var(--red); color: var(--red); background: none; }
+
+@media (max-width: 640px) {
+  .stepper ol { padding: 8px 12px; gap: 4px; }
+  .stepper li { gap: 4px; }
+  .stepper button:not([aria-current]) .step-label { display: none; }
+}

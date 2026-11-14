@@ -14,7 +14,7 @@ export interface Demo {
 
 export const DEMOS: Demo[] = [
   {
-    title: "🧊 Is the Arctic warming?",
+    title: "Is the Arctic warming?",
     summary: "Air temperature in Svalbard, at 78° north latitude.",
     theme: "heat",
     place: "Svalbard",
@@ -23,7 +23,7 @@ export const DEMOS: Demo[] = [
     whereQuestion: "Is the Arctic changing at the same pace as the rest of the planet? Here the same calculation is repeated at several places around the world.",
   },
   {
-    title: "🌧️ Has the rain returned to the Sahel?",
+    title: "Has the rain returned to the Sahel?",
     summary: "Precipitation on the southern edge of the Sahara, after the great droughts of the 1980s.",
     theme: "water",
     place: "Niamey",
@@ -32,7 +32,7 @@ export const DEMOS: Demo[] = [
     whereQuestion: "Is the change the same across the whole neighborhood? The map calculates the trend of each grid cell around the point.",
   },
   {
-    title: "🏙️ Has the air in Beijing changed?",
+    title: "Has the air in Beijing changed?",
     summary: "Suspended particles (aerosols) over a megacity, since 2001.",
     theme: "air",
     place: "Beijing",

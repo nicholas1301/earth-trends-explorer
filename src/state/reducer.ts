@@ -1,7 +1,7 @@
 import { FIRST_YEAR, LAST_YEAR, MIN_SPAN, PRESETS } from "../config/catalog";
 import type { PlaceProfile } from "../lib/geo";
 import { placeFromPreset } from "../lib/places";
-import type { ChartView, Filters, Place, PointData, ThemeId, WhereTab } from "../types";
+import type { ChartView, Filters, Place, PointData, Step, ThemeId, WhereTab } from "../types";
 
 /** A completed data download for one place. */
 export interface Investigation {
@@ -12,6 +12,8 @@ export interface Investigation {
 }
 
 export interface State {
+  /** Screen currently shown. */
+  step: Step;
   theme: ThemeId;
   /** Place currently chosen in the picker (may differ from the investigated one). */
   place: Place;
@@ -28,6 +30,7 @@ export interface State {
 }
 
 export const initialState: State = {
+  step: "home",
   theme: "heat",
   place: placeFromPreset(PRESETS[0]),
   filters: { y0: FIRST_YEAR, y1: LAST_YEAR, season: "year" },
@@ -42,6 +45,7 @@ export const initialState: State = {
 };
 
 export type Action =
+  | { type: "setStep"; step: Step }
   | { type: "setTheme"; theme: ThemeId }
   | { type: "setPlace"; place: Place }
   | { type: "setFilters"; filters: Partial<Filters> }
@@ -63,6 +67,8 @@ function normalizeFilters(prev: Filters, patch: Partial<Filters>): Filters {
 
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "setStep":
+      return { ...state, step: action.step };
     case "setTheme":
       return { ...state, theme: action.theme };
     case "setPlace":

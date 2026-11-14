@@ -1,13 +1,38 @@
-.clue-table tbody tr { cursor: pointer; }
-.clue-table tbody tr:hover { background: var(--card2); }
-.clue-table tbody tr.selected { background: #1c2a3c; box-shadow: inset 3px 0 0 var(--accent); }
-.clue-table .var-name { font-weight: 600; margin-right: 6px; }
-.clue-table .var-def { color: var(--muted); font-size: 12px; max-width: 46ch; }
+.clue-group { margin: 26px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--text); }
+.clue-group + .muted { margin-top: 12px; }
+.clues { margin-bottom: 12px; }
 
-.verdict-badge { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.verdict-badge i { font-style: normal; font-size: 12px; width: 14px; text-align: center; }
-.verdict-badge.flat i { color: var(--muted); }
-.verdict-badge small { color: var(--muted); }
+.clue {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 210px 18px;
+  gap: 16px;
+  align-items: center;
+  text-align: left;
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.clue:hover { background: var(--card2); }
+.clue[aria-current] { box-shadow: inset 3px 0 0 var(--red); }
 
-.evidence-dots { letter-spacing: 1px; color: var(--accent); }
-.evidence-dots s { text-decoration: none; color: var(--line-soft); }
+.clue-main { min-width: 0; }
+.clue-name { display: block; font-weight: 600; font-size: 16px; }
+.clue-def { display: block; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.clue-verdict { display: grid; font-weight: 600; }
+.clue-verdict i { font-style: normal; font-size: 12px; }
+.clue-verdict small { font-weight: 400; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.clue-verdict.weak { font-weight: 400; color: var(--muted); }
+
+.clue-go { color: var(--muted); }
+.clue:hover .clue-go { color: var(--red); }
+
+@media (max-width: 720px) {
+  .clue { grid-template-columns: minmax(0, 1fr) 18px; gap: 4px 10px; }
+  .clue-spark { display: none; }
+  .clue-verdict { grid-column: 1; grid-row: 2; }
+  .clue-go { grid-column: 2; grid-row: 1 / span 2; }
+  .clue-def { white-space: normal; }
+}
