@@ -1,0 +1,12 @@
+.place-now {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card2);
+}
+.place-now b { font-size: 15px; }
+
+.geo-message { margin-top: 4px; font-size: 13px; }
+.geo-message.error { color: var(--warm); }
+.geo-message button { padding: 2px 8px; font-size: 12px; }

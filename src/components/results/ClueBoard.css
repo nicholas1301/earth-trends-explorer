@@ -1,0 +1,13 @@
+.clue-table tbody tr { cursor: pointer; }
+.clue-table tbody tr:hover { background: var(--card2); }
+.clue-table tbody tr.selected { background: #1c2a3c; box-shadow: inset 3px 0 0 var(--accent); }
+.clue-table .var-name { font-weight: 600; margin-right: 6px; }
+.clue-table .var-def { color: var(--muted); font-size: 12px; max-width: 46ch; }
+
+.verdict-badge { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.verdict-badge i { font-style: normal; font-size: 12px; width: 14px; text-align: center; }
+.verdict-badge.flat i { color: var(--muted); }
+.verdict-badge small { color: var(--muted); }
+
+.evidence-dots { letter-spacing: 1px; color: var(--accent); }
+.evidence-dots s { text-decoration: none; color: var(--line-soft); }

@@ -1,0 +1,28 @@
+.comparison-bars { display: grid; gap: 4px; }
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 190px) 1fr 86px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12.5px;
+}
+.bar-row.current .bar-name { font-weight: 700; }
+.bar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-value { text-align: right; font-variant-numeric: tabular-nums; }
+
+.bar-track { position: relative; height: 16px; }
+.bar-track::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  border-left: 1px solid var(--line-soft);
+}
+.bar-track div {
+  position: absolute;
+  top: 2px;
+  height: 12px;
+  border-radius: 2px;
+}

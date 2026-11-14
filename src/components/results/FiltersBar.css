@@ -1,0 +1,13 @@
+.filters-bar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 4;
+  background: rgba(20, 26, 35, .96);
+  backdrop-filter: blur(8px);
+  padding: 10px 18px;
+}
+.filters-bar .profile { margin-left: auto; }
+
+@media (max-width: 860px) {
+  .filters-bar { position: static; }
+}
