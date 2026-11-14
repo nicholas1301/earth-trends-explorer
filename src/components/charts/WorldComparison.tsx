@@ -1,5 +1,5 @@
 import { useMemo, useState, type PointerEvent } from "react";
-import { PRESETS, seasonById } from "../../config/catalog";
+import { seasonById } from "../../config/catalog";
 import { directionColor, divergingColor, warmPoleSign } from "../../lib/colors";
 import { formatSigned } from "../../lib/format";
 import { samePlace } from "../../lib/places";
@@ -7,6 +7,7 @@ import { fetchPoint } from "../../lib/powerApi";
 import { clamp } from "../../lib/stats";
 import { analyzeTrend, isSignificant, perDecade, type TrendOk } from "../../lib/trend";
 import { useAsync } from "../../hooks/useAsync";
+import { useSavedPlaces } from "../../hooks/useSavedPlaces";
 import { useInvestigation } from "../../state/InvestigationContext";
 import { useTooltip } from "../../state/TooltipContext";
 import type { MonthlyGrid, Variable } from "../../types";
@@ -55,16 +56,18 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
   const investigation = state.investigation!;
   const current = investigation.place;
   const [progress, setProgress] = useState(0);
+  const saved = useSavedPlaces();
+  const savedKey = saved.places.map((p) => `${p.lat},${p.lon}`).join(";");
 
   const initialPlaces = (): ComparisonPlace[] => {
-    const list: ComparisonPlace[] = PRESETS.map((p) => ({ name: p.name, tag: p.tag, lat: p.lat, lon: p.lon, isCurrent: samePlace(p, current), grid: null }));
-    if (!list.some((p) => p.isCurrent)) list.push({ name: "Your point", tag: "", lat: current.lat, lon: current.lon, isCurrent: true, grid: null });
+    const list: ComparisonPlace[] = saved.places.map((p) => ({ name: p.name, tag: p.tag ?? "", lat: p.lat, lon: p.lon, isCurrent: samePlace(p, current), grid: null }));
+    if (!list.some((p) => p.isCurrent)) list.push({ name: current.name, tag: current.tag ?? "", lat: current.lat, lon: current.lon, isCurrent: true, grid: null });
     for (const p of list) if (p.isCurrent) p.grid = investigation.data[v.id];
     return list;
   };
 
-  const total = PRESETS.length + (PRESETS.some((p) => samePlace(p, current)) ? 0 : 1);
-  const { data: places, retry } = useAsync(() => loadPlaces(initialPlaces(), v.id, setProgress), [v.id, investigation.id]);
+  const total = saved.places.length + (saved.has(current) ? 0 : 1);
+  const { data: places, retry } = useAsync(() => loadPlaces(initialPlaces(), v.id, setProgress), [v.id, investigation.id, savedKey]);
 
   const comparison = useMemo(() => {
     if (!places) return null;
@@ -84,6 +87,17 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
   if (!comparison) return <Loading>Querying {progress} of {total} places…</Loading>;
 
   const { ok, missing, max } = comparison;
+  const savePrompt = !saved.has(current) && !saved.isFull && (
+    <button type="button" className="link" onClick={() => saved.add(current)}>☆ Save {current.name}</button>
+  );
+  if (saved.places.length === 0 || (saved.places.length === 1 && saved.has(current))) {
+    return (
+      <p className="muted">
+        There is nothing to compare with yet: your saved places list {saved.places.length ? "only has this place" : "is empty"}. Add places with ☆ Save on
+        step 1 (Place), and they will show up here. {savePrompt}
+      </p>
+    );
+  }
   if (!ok.length) return <ErrorMessage onRetry={retry}>Could not get data for comparison.</ErrorMessage>;
 
   const sign = warmPoleSign(v);
@@ -101,7 +115,7 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
   const markers: MapMarker[] = ok.map((p) => {
     const significant = isSignificant(p.result);
     return {
-      key: p.name,
+      key: `${p.lat},${p.lon}`,
       lat: p.lat,
       lon: p.lon,
       ...hoverHandlers(p),
@@ -141,7 +155,7 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
               const color = directionColor(v, value);
               const significant = isSignificant(p.result);
               return (
-                <div key={p.name} className={`bar-row clickable${p.isCurrent ? " current" : ""}`} {...hoverHandlers(p)}>
+                <div key={`${p.lat},${p.lon}`} className={`bar-row clickable${p.isCurrent ? " current" : ""}`} {...hoverHandlers(p)}>
                   <span className="bar-name">{p.isCurrent && "➤ "}{p.name}</span>
                   <span className="bar-track">
                     <div
@@ -159,6 +173,9 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
           </div>
           <p className="muted" style={{ marginTop: 8 }}>
             Filled bar and ● = significant (p &lt; 0.05); hollow bar = not significant. Click a place to investigate it.
+          </p>
+          <p className="muted" style={{ marginTop: 4 }}>
+            These are your saved places; edit the list on step 1 (Place). {savePrompt}
           </p>
         </div>
       </div>

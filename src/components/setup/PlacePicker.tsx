@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PRESETS } from "../../config/catalog";
 import { formatCoord } from "../../lib/format";
 import { isLand } from "../../lib/geo";
 import type { LatLon } from "../../lib/mapView";
 import { reverseGeocode } from "../../lib/geocode";
-import { DEFAULT_PLACE_LABEL, makePlace, placeFromPreset, samePlace } from "../../lib/places";
+import { DEFAULT_PLACE_LABEL, makePlace, samePlace } from "../../lib/places";
 import { useGeolocation } from "../../hooks/useGeolocation";
+import { useSavedPlaces } from "../../hooks/useSavedPlaces";
 import { useInvestigation } from "../../state/InvestigationContext";
 import type { Place } from "../../types";
 import { GeoMap, type MapMarker } from "../charts/GeoMap";
@@ -21,7 +21,7 @@ interface Props {
   onBack(): void;
 }
 
-/** Step 2: choose a place on the globe, from the presets, by coordinates or with the browser location. */
+/** Step 1: choose a place by name, on the globe, from the saved places, by coordinates or with the browser location. */
 export function PlacePicker({ onInvestigated, onBack }: Props) {
   const { state, actions } = useInvestigation();
   const { place } = state;
@@ -35,6 +35,10 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
   }, [place.lat, place.lon]);
 
   const lookingUp = usePlaceName(place, actions.setPlace);
+  const saved = useSavedPlaces();
+  const [editing, setEditing] = useState(false);
+  const [coordsOpen, setCoordsOpen] = useState(false);
+  const isSaved = saved.has(place);
 
   const choose = useCallback((p: Place) => actions.setPlace(p), [actions]);
   const geo = useGeolocation(useCallback((lat, lon) => choose(makePlace(lat, lon, undefined, MY_LOCATION)), [choose]));
@@ -46,14 +50,14 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
 
   const markers = useMemo<MapMarker[]>(
     () => [
-      ...PRESETS.map((p) => ({
-        key: p.name,
+      ...saved.places.map((p) => ({
+        key: `${p.lat},${p.lon}`,
         lat: p.lat,
         lon: p.lon,
-        onClick: () => choose(placeFromPreset(p)),
+        onClick: () => choose(p),
         content: (
           <circle className="preset-dot" r={4.5}>
-            <title>{`${p.name} — ${p.tag}`}</title>
+            <title>{p.name + (p.tag ? ` — ${p.tag}` : "")}</title>
           </circle>
         ),
       })),
@@ -69,7 +73,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
         ),
       },
     ],
-    [place, choose],
+    [place, choose, saved.places],
   );
 
   const investigate = async () => {
@@ -81,7 +85,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
   return (
     <section id="q-place">
       <SectionHeading title="Where?" />
-      <p className="lead">Search for any city, state or country, click anywhere on the globe, or pick one of the suggested places.</p>
+      <p className="lead">Search for any city, state or country, click anywhere on the globe, or pick one of your saved places.</p>
 
       <div className="cols place-cols">
         <GeoMap
@@ -99,55 +103,98 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
         <div className="place-panel">
           <div className="place-find">
             <PlaceSearch onSelect={(r) => choose({ ...makePlace(r.lat, r.lon, undefined, r.name), name: r.name, region: r.region })} />
-            <button
-              type="button"
-              className="locate-btn"
-              disabled={geo.status.kind === "asking"}
-              onClick={geo.locate}
-              title="Your browser will ask for permission first. The position is rounded to 0.1° (about 11 km) and is only used to query NASA data."
-            >
-              <span aria-hidden="true">📍</span>
-              {geo.status.kind === "asking" ? "Locating…" : "Use my location"}
-            </button>
+            <div className="place-find-row">
+              <button
+                type="button"
+                className="find-btn"
+                disabled={geo.status.kind === "asking"}
+                onClick={geo.locate}
+                title="Your browser will ask for permission first. The position is rounded to 0.1° (about 11 km) and is only used to query NASA data."
+              >
+                <span aria-hidden="true">📍</span>
+                {geo.status.kind === "asking" ? "Locating…" : "My location"}
+              </button>
+              <button type="button" className="find-btn" aria-expanded={coordsOpen} aria-controls="place-coords" onClick={() => setCoordsOpen((o) => !o)}>
+                <span aria-hidden="true">⌖</span>
+                Coordinates
+              </button>
+            </div>
+            {coordsOpen && (
+              <div id="place-coords" className="row place-coords">
+                <CoordinateInputs lat={place.lat} lon={place.lon} onChange={(lat, lon) => choose(makePlace(lat, lon))} />
+              </div>
+            )}
+            <GeolocationMessage status={geo.status} onRetry={geo.locate} />
           </div>
 
           <div className="place-now">
-            <h3>Selected place</h3>
+            <div className="place-now-head">
+              <h3>Selected place</h3>
+              <button
+                type="button"
+                className="save-toggle"
+                aria-pressed={isSaved}
+                disabled={!isSaved && (saved.isFull || lookingUp)}
+                title={isSaved ? "Remove from saved places" : saved.isFull ? "Your list is full — remove a place first" : "Add to saved places"}
+                onClick={() => (isSaved ? saved.remove(place) : saved.add(place))}
+              >
+                <span aria-hidden="true">{isSaved ? "★" : "☆"}</span>
+                {isSaved ? "Saved" : "Save"}
+              </button>
+            </div>
             <b>{lookingUp ? <span className="place-lookup">Finding place name…</span> : place.name}</b>
             <div className="muted">
               {place.region && `${place.region} · `}
               {description}
             </div>
-            <GeolocationMessage status={geo.status} onRetry={geo.locate} />
             <button type="button" className="primary big" disabled={state.loading} onClick={investigate}>
               {state.loading ? "Fetching NASA data…" : "Investigate this place →"}
             </button>
           </div>
 
-          <div>
-            <h3>Suggested places</h3>
-            <div className="chips">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.name}
-                  type="button"
-                  className="chip"
-                  title={p.tag}
-                  aria-pressed={samePlace(p, place) && place.name === p.name}
-                  onClick={() => choose(placeFromPreset(p))}
-                >
-                  {p.name}
+          <div className="saved-places">
+            <div className="saved-places-head">
+              <h3>Saved places <span className="muted">· {saved.places.length}</span></h3>
+              {saved.places.length > 0 && (
+                <button type="button" className="link" aria-pressed={editing} onClick={() => setEditing((e) => !e)}>
+                  {editing ? "Done" : "Edit"}
                 </button>
-              ))}
+              )}
             </div>
+            {saved.places.length > 0 ? (
+              <div className={`chips${editing ? " editing" : ""}`}>
+                {saved.places.map((p) =>
+                  editing ? (
+                    <button key={`${p.lat},${p.lon}`} type="button" className="chip removable" aria-label={`Remove ${p.name}`} onClick={() => saved.remove(p)}>
+                      {p.name} <span aria-hidden="true">×</span>
+                    </button>
+                  ) : (
+                    <button
+                      key={`${p.lat},${p.lon}`}
+                      type="button"
+                      className="chip"
+                      title={[p.region, p.tag].filter(Boolean).join(" · ")}
+                      aria-pressed={samePlace(p, place)}
+                      onClick={() => choose(p)}
+                    >
+                      {p.name}
+                    </button>
+                  ),
+                )}
+              </div>
+            ) : (
+              <p className="muted saved-empty">No saved places yet. Choose a place and press ☆ Save to keep it here and compare it in step 4.</p>
+            )}
+            <p className="muted saved-note">
+              Saved in this browser. They are also compared side by side in step 4.
+              {(editing || saved.places.length === 0) && (
+                <>
+                  {" "}
+                  <button type="button" className="link" onClick={() => { saved.reset(); setEditing(false); }}>Restore the suggested list</button>
+                </>
+              )}
+            </p>
           </div>
-
-          <details>
-            <summary>Type coordinates</summary>
-            <div className="row" style={{ marginTop: 10 }}>
-              <CoordinateInputs lat={place.lat} lon={place.lon} onChange={(lat, lon) => choose(makePlace(lat, lon))} />
-            </div>
-          </details>
         </div>
       </div>
 
