@@ -16,10 +16,10 @@ interface Props {
   onRestart(): void;
 }
 
-/** Step 5: the same variable around the point and at other places. Heavy downloads only start on request. */
+/** Step 5: the same variable around the point and at other places. Both comparisons load as soon as the step opens. */
 export function WhereSection({ variable, onBack, onRestart }: Props) {
   const { state, actions } = useInvestigation();
-  const { whereTab, regionRequested, worldRequested } = state;
+  const { whereTab } = state;
 
   return (
     <section id="sec-where">
@@ -32,26 +32,13 @@ export function WhereSection({ variable, onBack, onRestart }: Props) {
         with the rest of the world.
       </p>
 
+      {/* Both comparisons load as soon as the step opens, so switching tabs is instant. */}
       <div hidden={whereTab !== "region"}>
-        {regionRequested ? (
-          <RegionalTrendMap variable={variable} />
-        ) : (
-          <div className="row">
-            <button type="button" className="primary" onClick={() => actions.request("region")}>Map the surroundings</button>
-            <span className="muted">Calculates the trend of every map cell in a 10° × 10° area around the place.</span>
-          </div>
-        )}
+        <RegionalTrendMap variable={variable} />
       </div>
 
       <div hidden={whereTab !== "world"}>
-        {worldRequested ? (
-          <WorldComparison variable={variable} />
-        ) : (
-          <div className="row">
-            <button type="button" className="primary" onClick={() => actions.request("world")}>Compare with other places</button>
-            <span className="muted">Calculates the same trend at each suggested place.</span>
-          </div>
-        )}
+        <WorldComparison variable={variable} />
       </div>
 
       <div className="step-nav" style={{ marginTop: 24 }}>

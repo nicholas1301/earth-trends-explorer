@@ -45,12 +45,4 @@ describe("reducer filters", () => {
     expect(t.filters.y1).toBe(FIRST_YEAR + 9);
   });
 
-  it("resets the neighbourhood/world panels when the variable changes", () => {
-    let s = reducer({ ...initialState, variable: "T2M" }, { type: "request", what: "region" });
-    expect(s.regionRequested).toBe(true);
-    s = reducer(s, { type: "selectVariable", variable: "T2M" });
-    expect(s.regionRequested).toBe(true);
-    s = reducer(s, { type: "selectVariable", variable: "TS" });
-    expect(s.regionRequested).toBe(false);
-  });
 });

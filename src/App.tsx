@@ -84,7 +84,7 @@ export function App() {
             )}
             {step === "compare" && analysis.variable && (
               <WhereSection
-                key={`${state.investigation!.id}:${analysis.variable.id}`}
+                key={analysis.variable.id}
                 variable={analysis.variable}
                 onBack={() => actions.goTo("verdict")}
                 onRestart={() => actions.goTo("place")}

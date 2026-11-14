@@ -91,10 +91,7 @@ export function buildTourSteps(demo: Demo, actions: Actions): TourStep[] {
     {
       step: "compare",
       target: "sec-where",
-      run: () => {
-        actions.setWhereTab(demo.whereTab);
-        actions.request(demo.whereTab);
-      },
+      run: () => actions.setWhereTab(demo.whereTab),
       text: () => <>{demo.whereQuestion} Now it’s up to you: change the place, the period or the topic and follow the clues!</>,
     },
   ];

@@ -24,7 +24,6 @@ export interface Actions {
   setView(view: ChartView): void;
   setWhereTab(tab: WhereTab): void;
   selectVariable(id: string): void;
-  request(what: WhereTab): void;
   /** Downloads all variables for a place. Resolves to true on success. */
   investigate(options?: InvestigateOptions): Promise<boolean>;
   /** Moves the picker to a point and investigates it, keeping the current variable. */
@@ -96,7 +95,6 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
       setView: (view) => dispatch({ type: "setView", view }),
       setWhereTab: (tab) => dispatch({ type: "setWhereTab", tab }),
       selectVariable: (variable) => dispatch({ type: "selectVariable", variable }),
-      request: (what) => dispatch({ type: "request", what }),
       investigate,
       investigateAt: (lat, lon) => {
         const place = makePlace(lat, lon);

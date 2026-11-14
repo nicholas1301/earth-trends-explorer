@@ -25,9 +25,6 @@ export interface State {
   variable: string | null;
   loading: boolean;
   error: string | null;
-  /** Whether the user asked to map the neighbourhood / compare with the world for the current variable. */
-  regionRequested: boolean;
-  worldRequested: boolean;
 }
 
 export const initialState: State = {
@@ -41,8 +38,6 @@ export const initialState: State = {
   variable: null,
   loading: false,
   error: null,
-  regionRequested: false,
-  worldRequested: false,
 };
 
 export type Action =
@@ -53,7 +48,6 @@ export type Action =
   | { type: "setView"; view: ChartView }
   | { type: "setWhereTab"; tab: WhereTab }
   | { type: "selectVariable"; variable: string }
-  | { type: "request"; what: WhereTab }
   | { type: "investigationStarted" }
   | { type: "investigationSucceeded"; investigation: Investigation; variable: string }
   | { type: "investigationFailed"; error: string };
@@ -82,9 +76,7 @@ export function reducer(state: State, action: Action): State {
       return { ...state, whereTab: action.tab };
     case "selectVariable":
       if (action.variable === state.variable) return state;
-      return { ...state, variable: action.variable, regionRequested: false, worldRequested: false };
-    case "request":
-      return action.what === "region" ? { ...state, regionRequested: true } : { ...state, worldRequested: true };
+      return { ...state, variable: action.variable };
     case "investigationStarted":
       return { ...state, loading: true, error: null };
     case "investigationSucceeded":
@@ -94,8 +86,6 @@ export function reducer(state: State, action: Action): State {
         error: null,
         investigation: action.investigation,
         variable: action.variable,
-        regionRequested: false,
-        worldRequested: false,
       };
     case "investigationFailed":
       return { ...state, loading: false, error: action.error };
