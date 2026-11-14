@@ -7,6 +7,8 @@ products, 1981 to today) for any point on Earth, tests 20 variables for statisti
 (Mann-Kendall + Sen's slope, and OLS with an autocorrelation-corrected t-test) and helps you explore where and
 when the change happens.
 
+**Live app:** https://nicholas1301.github.io/earth-trends-explorer/
+
 ## Running locally
 
 Requires Node.js 18+.
