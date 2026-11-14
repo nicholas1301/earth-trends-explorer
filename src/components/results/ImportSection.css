@@ -1,0 +1,73 @@
+.import-tools .tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.import-tools .tool {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.dropzone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 22px;
+  border: 1.5px dashed var(--line-soft);
+  border-radius: 4px;
+  transition: border-color .15s, background .15s;
+}
+.dropzone.over { border-color: var(--red); background: var(--card2); }
+.file-button {
+  padding: 11px 20px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--inverse);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.file-button:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.file-button:focus-within { outline: 2px solid var(--red); outline-offset: 2px; }
+.file-button input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+textarea.paste {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  font: 12.5px ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 8px;
+  resize: vertical;
+}
+
+.imported { padding-top: 20px; border-top: 1px solid var(--text); }
+.import-setup { display: grid; gap: 10px; }
+.import-setup p { margin: 0; }
+.import-setup input[type=text] {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  padding: 6px 8px;
+  max-width: 100%;
+}
+.import-setup input.needs-input { border-color: var(--red); }
+.import-setup select { max-width: min(320px, 70vw); }
+.import-setup p { overflow-wrap: anywhere; }
+.import-setup label.field { flex-wrap: wrap; max-width: 100%; min-width: 0; }
+.import-setup input[type=text] { min-width: 0; }

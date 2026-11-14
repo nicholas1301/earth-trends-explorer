@@ -10,6 +10,7 @@ import { Legend } from "../ui/Legend";
 import { SectionHeading } from "../ui/SectionHeading";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Notice } from "../ui/Status";
+import { CrossCheck } from "./CrossCheck";
 import { StatTiles, VerdictPanel } from "./VerdictPanel";
 
 const VIEWS: { value: ChartView; label: string }[] = [
@@ -95,6 +96,8 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
             <h3>In which months does the change happen?</h3>
             <MonthlyTrendBars variable={v} grid={investigation.data[v.id]} y0={state.filters.y0} y1={state.filters.y1} />
           </div>
+
+          <CrossCheck variable={v} place={investigation.place} filters={state.filters} onImport={() => actions.goTo("import")} />
 
           <details>
             <summary>Show the statistics</summary>

@@ -4,7 +4,14 @@ import { ThemeIcon } from "../ui/ThemeIcon";
 import "./Home.css";
 
 /** Landing screen: one sentence about the tool, one button to start and the guided cases. */
-export function Home({ onStart, onStartDemo }: { onStart(): void; onStartDemo(index: number): void }) {
+interface Props {
+  onStart(): void;
+  onStartDemo(index: number): void;
+  /** Opens the screen that analyses a time series downloaded from another tool. */
+  onImport(): void;
+}
+
+export function Home({ onStart, onStartDemo, onImport }: Props) {
   return (
     <>
       <section className="hero">
@@ -34,6 +41,15 @@ export function Home({ onStart, onStartDemo }: { onStart(): void; onStartDemo(in
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="home-import">
+        <h3>Already have a time series?</h3>
+        <p className="muted">
+          Bring a file from NASA Giovanni (MODIS, OMI, AIRS, GPM, GLDAS…), NASA AppEEARS, KNMI Climate Explorer or a NOAA weather
+          station and run the same trend tests on it.
+        </p>
+        <button type="button" onClick={onImport}>Analyze your own data →</button>
       </section>
     </>
   );

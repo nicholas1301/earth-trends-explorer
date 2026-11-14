@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { FURTHER_READING } from "../../config/externalSources";
 import "./HelpDialog.css";
 
 const TERMS: Array<{ term: string; definition: ReactNode }> = [
@@ -16,7 +17,8 @@ const TERMS: Array<{ term: string; definition: ReactNode }> = [
   { term: "Sen’s slope", definition: "The median of the slopes between all pairs of years. It is a rate estimate that resists extreme years (a drought or a strong El Niño)." },
   { term: "Trend line and t-test", definition: "Fits the least-squares regression line and tests whether its slope differs from zero. The 95% confidence band shows the range of rates compatible with the data; if it does not include a flat line, the trend is significant." },
   { term: "Autocorrelation", definition: "Neighboring years tend to look alike, which makes the series “worth” fewer independent points. The t-test here uses an effective sample size corrected for 1-year autocorrelation." },
-  { term: "Anomaly (“without seasons”)", definition: "A month’s value minus the typical mean for that month. It removes the seasonal cycle, making the long-term change easier to see." },
+  { term: "Anomaly (“without seasons”)", definition: "A month’s value minus the typical mean for that month. It removes the seasonal cycle, making the long-term change easier to see. The yearly points are averages of these monthly anomalies — the same recipe used in NASA studies of satellite time series." },
+  { term: "Record length", definition: "Short records rarely give significant trends: year-to-year noise hides a slow change. A mission launched a few years ago (for example SWOT, 2022) cannot show a trend yet, while 40 years of reanalysis or station data often can." },
   { term: "Reanalysis (MERRA-2)", definition: "A NASA global model that combines millions of satellite and station observations to reconstruct the state of the atmosphere and surface, in cells of about 50 km." },
 ];
 
@@ -64,8 +66,20 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose(): void }
             fewer than 75% of the months are discarded. The “Dec–Feb” season uses the three months of the same calendar year. Reanalyses may
             contain artificial jumps when new satellites enter the system; treat a result as a clue to confirm with other sources, not as final
             proof. The analysis only detects linear/monotonic trends. “Significant” does not mean “important” and does not identify the cause.
-            Coastlines: Natural Earth (public domain).
+            Coastlines: Natural Earth (public domain). Imported files are averaged per calendar month and analysed with the same methods;
+            their quality and units are those of the original tool.
           </p>
+        </details>
+        <details>
+          <summary>Further reading</summary>
+          <ul className="reading">
+            {FURTHER_READING.map((r) => (
+              <li key={r.url}>
+                <a href={r.url} target="_blank" rel="noreferrer">{r.title} ↗</a>
+                <span className="muted"> — {r.note}</span>
+              </li>
+            ))}
+          </ul>
         </details>
       </div>
     </dialog>

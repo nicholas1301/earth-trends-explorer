@@ -21,3 +21,9 @@
 }
 .glossary dt { font-weight: 600; }
 .glossary dd { margin: 0; color: var(--muted); font-size: 14px; }
+
+.help-body details + details { margin-top: 12px; }
+.reading { margin: 8px 0 0; padding-left: 18px; font-size: 14px; }
+.reading li { margin: 6px 0; }
+.reading a { color: inherit; text-underline-offset: 3px; }
+.reading a:hover { color: var(--red); }

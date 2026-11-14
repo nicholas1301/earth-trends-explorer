@@ -22,18 +22,22 @@ function Headline({ result: r }: { result: TrendOk }) {
   return <>No significant trend</>;
 }
 
+/** Lower-cases a leading capital for use mid-sentence, but keeps acronyms ("AOD", "GLDAS") intact. */
+const midSentence = (name: string): string => (/^[A-Z][a-z]/.test(name) ? name[0].toLowerCase() + name.slice(1) : name);
+
 function Explanation({ variable: v, result: r, place, season }: Props) {
   const first = r.years[0];
   const last = r.years[r.years.length - 1];
-  const what = `${v.name.toLowerCase()} in ${place.name}${season.id === "year" ? "" : ` (${season.name})`}`;
+  const what = `${midSentence(v.name)} in ${place.name}${season.id === "year" ? "" : ` (${season.name})`}`;
   if (r.direction === 0) {
     return <p>The {what} stayed at practically the same level between {first} and {last}.</p>;
   }
 
   const perDecade = r.mk.sen * 10;
   const total = r.mk.sen * r.span;
-  // Relative change is meaningless for temperatures (arbitrary zero).
-  const relative = Math.abs(r.base) > 1e-9 && v.unit !== "°C" ? (total / Math.abs(r.base)) * 100 : null;
+  // Relative change is meaningless for temperatures (arbitrary zero), including imported series in °C, K or °F.
+  const temperatureUnit = /°|celsius|kelvin|fahrenheit|^\s*(deg\s*)?[CKF]\s*$/i.test(v.unit);
+  const relative = Math.abs(r.base) > 1e-9 && !temperatureUnit ? (total / Math.abs(r.base)) * 100 : null;
   const p = formatPValue(r.mk.p);
   const tSignificant = r.ols.p < 0.05;
   const mkSignificant = r.mk.p < 0.05;
@@ -59,7 +63,7 @@ function Explanation({ variable: v, result: r, place, season }: Props) {
       )}
       {needed != null && (
         <p className="muted">
-          If the same pace continues, about <b className="hl">{needed} more years</b> of data would be needed for the trend to become
+          If the same pace continues, about <b className="hl">{needed} more {needed === 1 ? "year" : "years"}</b> of data would be needed for the trend to become
           significant.
         </p>
       )}
@@ -98,7 +102,7 @@ function Tile({ label, value, sub }: { label: string; value: ReactNode; sub: Rea
 /** The detailed statistics behind the verdict, for readers who want them. */
 export function StatTiles({ variable: v, result: r }: { variable: Variable; result: TrendOk }) {
   const d = v.digits;
-  const unit = <small>{v.unit}/decade</small>;
+  const unit = <small>{v.unit ? `${v.unit}/decade` : "per decade"}</small>;
   return (
     <div className="tiles">
       <Tile label="Rate (Sen)" value={<>{formatSigned(r.mk.sen * 10, d)} {unit}</>} sub="median of the slopes" />

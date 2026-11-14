@@ -36,12 +36,13 @@ export type TrendResult = TrendOk | TrendInsufficient;
 const cell = (grid: MonthlyGrid, yearIndex: number, month: number) => grid[yearIndex]?.[month] ?? null;
 
 /**
- * Annual series built from monthly anomalies, which makes it robust to missing months.
- * Years with fewer than 75% of the selected months are discarded.
+ * Annual series built from monthly anomalies (monthly value minus that month's mean, averaged per year), which
+ * makes it robust to missing months. Years with fewer than 75% of the selected months are discarded.
+ * `origin` is the calendar year of grid row 0 (FIRST_YEAR for NASA POWER data; imported series may start earlier).
  */
-export function annualSeries(grid: MonthlyGrid, y0: number, y1: number, months: number[]): AnnualSeries {
-  const i0 = y0 - FIRST_YEAR;
-  const i1 = y1 - FIRST_YEAR;
+export function annualSeries(grid: MonthlyGrid, y0: number, y1: number, months: number[], origin = FIRST_YEAR): AnnualSeries {
+  const i0 = Math.max(0, y0 - origin);
+  const i1 = y1 - origin;
   const climatology: Record<number, number> = {};
   for (const m of months) {
     let sum = 0;
@@ -67,15 +68,15 @@ export function annualSeries(grid: MonthlyGrid, y0: number, y1: number, months: 
       if (v != null) { sum += v - climatology[m]; count++; }
     }
     if (count && count >= 0.75 * usable.length) {
-      years.push(FIRST_YEAR + i);
+      years.push(origin + i);
       values.push(base + sum / count);
     }
   }
   return { years, values, climatology, base };
 }
 
-export function analyzeTrend(grid: MonthlyGrid, y0: number, y1: number, months: number[]): TrendResult {
-  const series = annualSeries(grid, y0, y1, months);
+export function analyzeTrend(grid: MonthlyGrid, y0: number, y1: number, months: number[], origin = FIRST_YEAR): TrendResult {
+  const series = annualSeries(grid, y0, y1, months, origin);
   if (series.years.length < MIN_YEARS) return { ok: false, ...series };
 
   const { years, values } = series;

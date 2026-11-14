@@ -34,3 +34,6 @@
   text-align: center;
 }
 .app-footer .space-apps-logo { height: 44px; }
+
+.home-import { padding-top: 20px; border-top: 1px solid var(--line); }
+.home-import .muted { max-width: 70ch; }

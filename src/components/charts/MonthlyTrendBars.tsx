@@ -12,11 +12,20 @@ import { TrendTooltip } from "../ui/TrendTooltip";
 const H = 170;
 const MARGIN = { left: 52, right: 12, top: 10, bottom: 22 };
 
+interface Props {
+  variable: Variable;
+  grid: MonthlyGrid;
+  y0: number;
+  y1: number;
+  /** Calendar year of grid row 0 (defaults to the NASA POWER first year). */
+  origin?: number;
+}
+
 /** Sen's slope per decade computed separately for each calendar month. Filled bars are significant. */
-export function MonthlyTrendBars({ variable: v, grid, y0, y1 }: { variable: Variable; grid: MonthlyGrid; y0: number; y1: number }) {
+export function MonthlyTrendBars({ variable: v, grid, y0, y1, origin }: Props) {
   const [ref, width] = useElementWidth<HTMLDivElement>();
   const tooltip = useTooltip();
-  const results = useMemo(() => MONTHS.map((_, m) => analyzeTrend(grid, y0, y1, [m])), [grid, y0, y1]);
+  const results = useMemo(() => MONTHS.map((_, m) => analyzeTrend(grid, y0, y1, [m], origin)), [grid, y0, y1, origin]);
   const values = results.map((r) => (r.ok ? perDecade(r) : 0));
 
   const W = Math.max(300, width);

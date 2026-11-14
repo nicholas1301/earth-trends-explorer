@@ -1,0 +1,4 @@
+.crosscheck ul { margin: 0; padding-left: 18px; }
+.crosscheck li { margin: 4px 0; }
+.crosscheck a, .import-tools a { color: inherit; font-weight: 600; text-underline-offset: 3px; }
+.crosscheck a:hover, .import-tools a:hover { color: var(--red); }

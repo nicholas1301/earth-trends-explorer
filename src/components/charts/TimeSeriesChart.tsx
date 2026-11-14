@@ -18,6 +18,8 @@ interface Props {
   view: ChartView;
   /** Name of the plotted series (e.g. “Annual mean”). */
   seriesLabel: string;
+  /** Calendar year of grid row 0 (defaults to FIRST_YEAR). */
+  origin?: number;
 }
 
 interface Point {
@@ -29,7 +31,7 @@ interface Point {
 const MARGIN = { left: 52, right: 12, top: 12, bottom: 26 };
 
 /** Builds the plotted points. Years are placed at mid-year (x + 0.5), months at mid-month. */
-function buildPoints({ result: r, grid, months, y0, y1, view }: Props): { points: Point[]; offset: number } {
+function buildPoints({ result: r, grid, months, y0, y1, view, origin = FIRST_YEAR }: Props): { points: Point[]; offset: number } {
   if (view === "annual") {
     return { points: r.years.map((x, i) => ({ x: x + 0.5, y: r.values[i], label: String(x) })), offset: 0 };
   }
@@ -37,7 +39,7 @@ function buildPoints({ result: r, grid, months, y0, y1, view }: Props): { points
   const sorted = [...months].sort((a, b) => a - b);
   for (let yr = y0; yr <= y1; yr++) {
     for (const m of sorted) {
-      const val = grid[yr - FIRST_YEAR]?.[m];
+      const val = grid[yr - origin]?.[m];
       if (val == null || r.climatology[m] == null) continue;
       points.push({ x: yr + (m + 0.5) / 12, y: view === "anomaly" ? val - r.climatology[m] : val, label: `${MONTHS[m]} ${yr}` });
     }
@@ -52,7 +54,7 @@ export function TimeSeriesChart(props: Props) {
   const tooltip = useTooltip();
   const [hover, setHover] = useState<Point | null>(null);
 
-  const { points, offset } = useMemo(() => buildPoints(props), [props.result, props.grid, props.months, props.y0, props.y1, props.view]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { points, offset } = useMemo(() => buildPoints(props), [props.result, props.grid, props.months, props.y0, props.y1, props.view, props.origin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trend lines are fitted on annual means (x = year); shift by 0.5 to the plotted mid-year.
   const o = r.ols;

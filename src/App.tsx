@@ -8,6 +8,7 @@ import { Stepper } from "./components/layout/Stepper";
 import { AnalysisSection } from "./components/results/AnalysisSection";
 import { ClueBoard } from "./components/results/ClueBoard";
 import { FiltersBar } from "./components/results/FiltersBar";
+import { ImportSection } from "./components/results/ImportSection";
 import { WhereSection } from "./components/results/WhereSection";
 import { PlacePicker } from "./components/setup/PlacePicker";
 import { ThemePicker } from "./components/setup/ThemePicker";
@@ -17,7 +18,7 @@ import { formatCoord } from "./lib/format";
 import { FIRST_YEAR, LAST_YEAR } from "./config/catalog";
 import { useInvestigation } from "./state/InvestigationContext";
 
-/** One screen per step: home → topic → place → clues → verdict → compare. */
+/** One screen per step: home → topic → place → clues → verdict → compare (plus the import screen, reached from home). */
 export function App() {
   const { state, actions, analysis } = useInvestigation();
   const [demoIndex, setDemoIndex] = useState<number | null>(null);
@@ -34,10 +35,13 @@ export function App() {
   return (
     <>
       <AppHeader onHome={() => actions.goTo("home")} onHelp={() => setHelpOpen(true)} />
-      {step !== "home" && <Stepper />}
+      {step !== "home" && step !== "import" && <Stepper />}
 
       <main>
-        {step === "home" && <Home onStart={() => actions.goTo("theme")} onStartDemo={setDemoIndex} />}
+        {step === "home" && (
+          <Home onStart={() => actions.goTo("theme")} onStartDemo={setDemoIndex} onImport={() => actions.goTo("import")} />
+        )}
+        {step === "import" && <ImportSection onBack={() => actions.goTo("home")} onHelp={() => setHelpOpen(true)} />}
         {step === "theme" && <ThemePicker onNext={() => actions.goTo("place")} />}
         {step === "place" && <PlacePicker onInvestigated={() => actions.goTo("clues")} onBack={() => actions.goTo("theme")} />}
 
