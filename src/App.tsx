@@ -9,6 +9,7 @@ import { AnalysisSection } from "./components/results/AnalysisSection";
 import { ClueBoard } from "./components/results/ClueBoard";
 import { FiltersBar } from "./components/results/FiltersBar";
 import { ImportSection } from "./components/results/ImportSection";
+import { SelectionBar } from "./components/results/SelectionBar";
 import { WhereSection } from "./components/results/WhereSection";
 import { PlacePicker } from "./components/setup/PlacePicker";
 import { GuidedTour } from "./components/tour/GuidedTour";
@@ -63,7 +64,10 @@ export function App() {
 
         {isResult && analysis && (
           <div className={`stack${state.loading ? " dimmed" : ""}`}>
-            <FiltersBar />
+            <div className="result-controls">
+              <SelectionBar showVariable={step !== "clues"} />
+              <FiltersBar />
+            </div>
             {step === "clues" && (
               <ClueBoard
                 analysis={analysis}
