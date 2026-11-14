@@ -1,17 +1,25 @@
 import { FIRST_YEAR, LAST_YEAR, VARIABLES } from "../../config/catalog";
+import { CHALLENGES } from "../../config/challenges";
 import { DEMOS } from "../../config/demos";
+import { useChallengeProgress } from "../../hooks/useChallengeProgress";
+import { LEVEL_NAMES } from "../../lib/challenges";
+import { formatSigned } from "../../lib/format";
 import { ThemeIcon } from "../ui/ThemeIcon";
 import "./Home.css";
 
-/** Landing screen: one sentence about the tool, one button to start and the guided cases. */
+/** Landing screen: one sentence about the tool, one button to start, the guided cases and the optional challenges. */
 interface Props {
   onStart(): void;
   onStartDemo(index: number): void;
+  /** Starts an optional challenge, solved with the regular tool. */
+  onStartChallenge(id: string): void;
   /** Opens the screen that analyses a time series downloaded from another tool. */
   onImport(): void;
 }
 
-export function Home({ onStart, onStartDemo, onImport }: Props) {
+export function Home({ onStart, onStartDemo, onStartChallenge, onImport }: Props) {
+  const { progress, isDone } = useChallengeProgress();
+  const solved = CHALLENGES.filter((c) => isDone(c.id)).length;
   return (
     <>
       <section className="hero">
@@ -38,6 +46,33 @@ export function Home({ onStart, onStartDemo, onImport }: Props) {
               <b>{d.title}</b>
               <span>{d.summary}</span>
               <span className="go">Watch the case →</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-challenges">
+        <h3>
+          Feeling like a detective? Take a challenge
+          {solved > 0 && <span className="tag">{solved} of {CHALLENGES.length} solved</span>}
+        </h3>
+        <p className="muted">Optional cases to crack with the tool itself. No timer and no wrong moves: explore, then answer.</p>
+        <div className="demos">
+          {CHALLENGES.map((c) => (
+            <button key={c.id} type="button" className={`demo challenge${isDone(c.id) ? " solved" : ""}`} onClick={() => onStartChallenge(c.id)}>
+              <span className="challenge-level">
+                <ThemeIcon theme={c.theme} />
+                {LEVEL_NAMES[c.level]}
+                {isDone(c.id) && <span className="tag">Solved ✓</span>}
+              </span>
+              <b>{c.title}</b>
+              <span>{c.summary}</span>
+              {c.score && progress.best[c.id] != null && (
+                <span>
+                  {c.score.label}: {formatSigned(progress.best[c.id], c.score.digits)} {c.score.unit}
+                </span>
+              )}
+              <span className="go">{isDone(c.id) ? "Play again →" : "Take the challenge →"}</span>
             </button>
           ))}
         </div>

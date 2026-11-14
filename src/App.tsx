@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { CHALLENGES } from "./config/challenges";
 import { DEMOS } from "./config/demos";
+import { ChallengeCard } from "./components/challenges/ChallengeCard";
+import { useChallengeProgress } from "./hooks/useChallengeProgress";
 import { AppHeader } from "./components/layout/AppHeader";
 import { HelpDialog } from "./components/layout/HelpDialog";
 import { Home } from "./components/layout/Home";
@@ -22,9 +25,24 @@ import { useInvestigation } from "./state/InvestigationContext";
 export function App() {
   const { state, actions, analysis } = useInvestigation();
   const [demoIndex, setDemoIndex] = useState<number | null>(null);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const { isDone } = useChallengeProgress();
   const { step } = state;
   const touring = demoIndex != null;
+  const challenge = CHALLENGES.find((c) => c.id === challengeId) ?? null;
+  const nextChallenge = challenge && CHALLENGES.find((c) => c.id !== challenge.id && !isDone(c.id));
+
+  // A challenge is solved with the regular tool, so it starts where every investigation starts: choosing a place.
+  const startChallenge = (id: string) => {
+    setChallengeId(id);
+    actions.goTo("place");
+  };
+  const startDemo = (index: number) => {
+    setChallengeId(null);
+    setDemoIndex(index);
+  };
+
   const isResult = step === "clues" || step === "verdict" || step === "compare";
 
   // Each step starts at the top of the page (the guided tour scrolls to its own targets).
@@ -39,7 +57,12 @@ export function App() {
 
       <main>
         {step === "home" && (
-          <Home onStart={() => actions.goTo("place")} onStartDemo={setDemoIndex} onImport={() => actions.goTo("import")} />
+          <Home
+            onStart={() => actions.goTo("place")}
+            onStartDemo={startDemo}
+            onStartChallenge={startChallenge}
+            onImport={() => actions.goTo("import")}
+          />
         )}
         {step === "import" && <ImportSection onBack={() => actions.goTo("home")} onHelp={() => setHelpOpen(true)} />}
         {step === "place" && <PlacePicker onInvestigated={() => actions.goTo("clues")} onBack={() => actions.goTo("home")} />}
@@ -106,6 +129,14 @@ export function App() {
       </footer>
 
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+      {challenge && !touring && step !== "home" && step !== "import" && (
+        <ChallengeCard
+          key={challenge.id}
+          challenge={challenge}
+          onClose={() => setChallengeId(null)}
+          onNext={nextChallenge ? () => startChallenge(nextChallenge.id) : undefined}
+        />
+      )}
       {touring && <GuidedTour demo={DEMOS[demoIndex]} onClose={() => setDemoIndex(null)} />}
     </>
   );
