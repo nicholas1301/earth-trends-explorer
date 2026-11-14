@@ -18,7 +18,7 @@ interface InvestigateOptions {
 
 export interface Actions {
   goTo(step: Step): void;
-  setTheme(theme: ThemeId): void;
+  setTopic(topic: ThemeId | null): void;
   setPlace(place: Place): void;
   setFilters(filters: Partial<Filters>): void;
   setView(view: ChartView): void;
@@ -32,7 +32,7 @@ export interface Actions {
   retry(): Promise<boolean>;
 }
 
-/** Derived data for the investigated place, recomputed when the data, filters or theme change. */
+/** Derived data for the investigated place, recomputed when the data or filters change. */
 export interface Analysis {
   scan: Scan;
   ranked: Variable[];
@@ -76,9 +76,8 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
         const profile = profilePlace(data, place.lat, place.lon);
         let variable = options.variable && VARIABLE_BY_ID[options.variable] ? options.variable : null;
         if (!variable) {
-          const { theme, filters } = stateRef.current;
-          const scan = scanVariables(data, filters);
-          const ranked = rankVariables(scan, theme, typicalClues(profile.kind, place.tag));
+          const scan = scanVariables(data, stateRef.current.filters);
+          const ranked = rankVariables(scan);
           variable = (ranked.find((v) => scan[v.id].ok) ?? ranked[0]).id;
         }
         dispatch({ type: "investigationSucceeded", investigation: { id, place, data, profile }, variable });
@@ -91,7 +90,7 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
 
     return {
       goTo: (step) => dispatch({ type: "setStep", step }),
-      setTheme: (theme) => dispatch({ type: "setTheme", theme }),
+      setTopic: (topic) => dispatch({ type: "setTopic", topic }),
       setPlace: (place) => dispatch({ type: "setPlace", place }),
       setFilters: (filters) => dispatch({ type: "setFilters", filters }),
       setView: (view) => dispatch({ type: "setView", view }),
@@ -112,7 +111,7 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const shared = readHash();
     if (!shared) return;
-    if (shared.theme) actions.setTheme(shared.theme);
+    if (shared.topic) actions.setTopic(shared.topic);
     actions.setFilters(shared.filters);
     const place = makePlace(shared.lat, shared.lon);
     actions.setPlace(place);
@@ -121,12 +120,12 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
   }, [actions]);
 
   // Keep the URL in sync with the investigation so it can be shared.
-  const { investigation, variable, theme, filters } = state;
+  const { investigation, variable, topic, filters } = state;
   useEffect(() => {
     if (investigation && variable) {
-      writeHash({ lat: investigation.place.lat, lon: investigation.place.lon, variable, theme, filters });
+      writeHash({ lat: investigation.place.lat, lon: investigation.place.lon, variable, topic, filters });
     }
-  }, [investigation, variable, theme, filters]);
+  }, [investigation, variable, topic, filters]);
 
   const scan = useMemo(() => (investigation ? scanVariables(investigation.data, filters) : null), [investigation, filters]);
 
@@ -136,12 +135,12 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
     return {
       scan,
       hints,
-      ranked: rankVariables(scan, theme, hints),
+      ranked: rankVariables(scan),
       season: seasonById(filters.season),
       variable: variable ? VARIABLE_BY_ID[variable] : null,
       result: variable ? scan[variable] : null,
     };
-  }, [investigation, scan, theme, variable, filters.season]);
+  }, [investigation, scan, variable, filters.season]);
 
   const value = useMemo(() => ({ state, actions, analysis }), [state, actions, analysis]);
   return <InvestigationContext.Provider value={value}>{children}</InvestigationContext.Provider>;

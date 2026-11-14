@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { VARIABLES, themeById } from "../../config/catalog";
+import { THEMES, VARIABLES, themeById } from "../../config/catalog";
 import { decreaseColor, increaseColor } from "../../lib/colors";
 import { formatNumber, formatPValue, formatSigned } from "../../lib/format";
 import { LEVEL_LABELS, SIGNIFICANT, isSignificant, perDecade, type TrendResult } from "../../lib/trend";
@@ -7,6 +7,7 @@ import { useInvestigation, type Analysis } from "../../state/InvestigationContex
 import type { Variable } from "../../types";
 import { Sparkline } from "../charts/Sparkline";
 import { SectionHeading } from "../ui/SectionHeading";
+import { ThemeIcon } from "../ui/ThemeIcon";
 import "./ClueBoard.css";
 
 interface Props {
@@ -15,19 +16,18 @@ interface Props {
   onBack(): void;
 }
 
-/** Step 3: the variables of the chosen topic, then whatever else is clearly changing in this place. */
+/** Step 2: every variable tested in this place, from the most to the least significant trend, optionally filtered by topic. */
 export function ClueBoard({ analysis, onSelect, onBack }: Props) {
-  const { state } = useInvestigation();
+  const { state, actions } = useInvestigation();
   const [showAll, setShowAll] = useState(false);
   const { scan, ranked, hints } = analysis;
-  const theme = themeById(state.theme);
+  const { topic } = state;
   const { place, profile } = state.investigation!;
   const nSignificant = VARIABLES.filter((v) => isSignificant(scan[v.id])).length;
 
-  const inTheme = ranked.filter((v) => v.themes.includes(state.theme));
-  const others = ranked.filter((v) => !v.themes.includes(state.theme));
-  const notable = others.filter((v) => isSignificant(scan[v.id]));
-  const hidden = others.length - notable.length;
+  const inTopic = topic ? ranked.filter((v) => v.themes.includes(topic)) : ranked;
+  const notable = inTopic.filter((v) => isSignificant(scan[v.id]));
+  const hidden = inTopic.length - notable.length;
 
   const row = (v: Variable) => (
     <ClueRow key={v.id} variable={v} result={scan[v.id]} selected={v.id === state.variable} typical={hints.has(v.id)} onSelect={onSelect} />
@@ -45,12 +45,25 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
         of rain per year
       </p>
 
-      <h3 className="clue-group">{theme.name}</h3>
-      <div className="clues">{inTheme.map(row)}</div>
+      <div className="topic-filter" role="group" aria-label="Filter clues by topic">
+        <button type="button" aria-pressed={topic === null} onClick={() => actions.setTopic(null)}>
+          All topics
+        </button>
+        {THEMES.map((t) => (
+          <button key={t.id} type="button" aria-pressed={topic === t.id} title={t.description} onClick={() => actions.setTopic(t.id)}>
+            <ThemeIcon theme={t.id} size={16} />
+            {t.name}
+          </button>
+        ))}
+      </div>
 
-      <h3 className="clue-group">Also changing here</h3>
-      {!notable.length && !showAll && <p className="muted">No other variable shows a significant trend.</p>}
-      <div className="clues">{(showAll ? others : notable).map(row)}</div>
+      <h3 className="clue-group">
+        {topic ? themeById(topic).name : "All variables"} · strongest trends first
+      </h3>
+      {!notable.length && !showAll && (
+        <p className="muted">No variable {topic ? "in this topic " : ""}shows a significant trend.</p>
+      )}
+      <div className="clues">{(showAll ? inTopic : notable).map(row)}</div>
       {hidden > 0 && (
         <button type="button" className="link" onClick={() => setShowAll(!showAll)}>
           {showAll ? "Show only significant trends" : `Show the other ${hidden} variables`}

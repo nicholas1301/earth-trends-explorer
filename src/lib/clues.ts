@@ -1,5 +1,5 @@
 import { HINTS, VARIABLES } from "../config/catalog";
-import type { Filters, PointData, ThemeId, Variable } from "../types";
+import type { Filters, PointData, Variable } from "../types";
 import { seasonById } from "../config/catalog";
 import { analyzeTrend, type TrendResult } from "./trend";
 
@@ -16,11 +16,11 @@ export function typicalClues(profileKind: string, tag: string | null): Set<strin
   return new Set([...(HINTS[profileKind] ?? []), ...(tag ? HINTS[tag] ?? [] : [])]);
 }
 
-/** Theme variables first, then typical clues, each ordered by strength of evidence (|Z|). */
-export function rankVariables(scan: Scan, theme: ThemeId, hints: Set<string>): Variable[] {
+/** All variables from the most to the least significant trend (evidence level, then |Z|); those without enough data last. */
+export function rankVariables(scan: Scan): Variable[] {
   const score = (v: Variable) => {
     const r = scan[v.id];
-    return (v.themes.includes(theme) ? 1000 : 0) + (hints.has(v.id) ? 100 : 0) + (r.ok ? Math.abs(r.mk.Z) : -50);
+    return r.ok ? r.level * 1000 + Math.abs(r.mk.Z) : -1;
   };
   return [...VARIABLES].sort((a, b) => score(b) - score(a));
 }

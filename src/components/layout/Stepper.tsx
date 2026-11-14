@@ -3,7 +3,6 @@ import type { Step } from "../../types";
 import "./Stepper.css";
 
 const STEPS: Array<{ id: Step; label: string }> = [
-  { id: "theme", label: "Topic" },
   { id: "place", label: "Place" },
   { id: "clues", label: "Clues" },
   { id: "verdict", label: "Verdict" },
@@ -19,7 +18,7 @@ export function Stepper() {
     <nav className="stepper" aria-label="Investigation steps">
       <ol>
         {STEPS.map((s, i) => {
-          const locked = i >= 2 && !analysis;
+          const locked = i >= 1 && !analysis;
           return (
             <li key={s.id} className={i < current ? "done" : undefined}>
               <button

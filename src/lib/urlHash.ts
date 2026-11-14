@@ -6,13 +6,14 @@ export interface SharedInvestigation {
   lat: number;
   lon: number;
   variable: string | null;
-  theme: ThemeId | null;
+  topic: ThemeId | null;
   filters: Partial<Filters>;
 }
 
-export function writeHash(s: { lat: number; lon: number; variable: string; theme: ThemeId; filters: Filters }): void {
+export function writeHash(s: { lat: number; lon: number; variable: string; topic: ThemeId | null; filters: Filters }): void {
   const { y0, y1, season } = s.filters;
-  history.replaceState(null, "", `#lat=${s.lat}&lon=${s.lon}&v=${s.variable}&t=${s.theme}&y0=${y0}&y1=${y1}&s=${season}`);
+  const t = s.topic ? `&t=${s.topic}` : "";
+  history.replaceState(null, "", `#lat=${s.lat}&lon=${s.lon}&v=${s.variable}${t}&y0=${y0}&y1=${y1}&s=${season}`);
 }
 
 export function readHash(hash = location.hash): SharedInvestigation | null {
@@ -21,7 +22,7 @@ export function readHash(hash = location.hash): SharedInvestigation | null {
   const lon = parseFloat(q.get("lon") ?? "");
   if (!isFinite(lat) || !isFinite(lon)) return null;
 
-  const theme = THEMES.find((t) => t.id === q.get("t"))?.id ?? null;
+  const topic = THEMES.find((t) => t.id === q.get("t"))?.id ?? null;
   const v = q.get("v");
   const filters: Partial<Filters> = {};
   const season = q.get("s");
@@ -30,5 +31,5 @@ export function readHash(hash = location.hash): SharedInvestigation | null {
   const y1 = parseInt(q.get("y1") ?? "");
   if (y0 >= FIRST_YEAR && y1 <= LAST_YEAR && y1 - y0 >= MIN_SPAN) Object.assign(filters, { y0, y1 });
 
-  return { lat, lon, variable: v && VARIABLE_BY_ID[v] ? v : null, theme, filters };
+  return { lat, lon, variable: v && VARIABLE_BY_ID[v] ? v : null, topic, filters };
 }

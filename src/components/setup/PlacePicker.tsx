@@ -145,7 +145,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
       </div>
 
       <div className="step-nav">
-        <button type="button" onClick={onBack}>← Topic</button>
+        <button type="button" onClick={onBack}>← Home</button>
       </div>
     </section>
   );

@@ -11,14 +11,13 @@ import { FiltersBar } from "./components/results/FiltersBar";
 import { ImportSection } from "./components/results/ImportSection";
 import { WhereSection } from "./components/results/WhereSection";
 import { PlacePicker } from "./components/setup/PlacePicker";
-import { ThemePicker } from "./components/setup/ThemePicker";
 import { GuidedTour } from "./components/tour/GuidedTour";
 import { ErrorMessage, Loading, Notice } from "./components/ui/Status";
 import { formatCoord } from "./lib/format";
 import { FIRST_YEAR, LAST_YEAR } from "./config/catalog";
 import { useInvestigation } from "./state/InvestigationContext";
 
-/** One screen per step: home → topic → place → clues → verdict → compare (plus the import screen, reached from home). */
+/** One screen per step: home → place → clues → verdict → compare (plus the import screen, reached from home). */
 export function App() {
   const { state, actions, analysis } = useInvestigation();
   const [demoIndex, setDemoIndex] = useState<number | null>(null);
@@ -39,11 +38,10 @@ export function App() {
 
       <main>
         {step === "home" && (
-          <Home onStart={() => actions.goTo("theme")} onStartDemo={setDemoIndex} onImport={() => actions.goTo("import")} />
+          <Home onStart={() => actions.goTo("place")} onStartDemo={setDemoIndex} onImport={() => actions.goTo("import")} />
         )}
         {step === "import" && <ImportSection onBack={() => actions.goTo("home")} onHelp={() => setHelpOpen(true)} />}
-        {step === "theme" && <ThemePicker onNext={() => actions.goTo("place")} />}
-        {step === "place" && <PlacePicker onInvestigated={() => actions.goTo("clues")} onBack={() => actions.goTo("theme")} />}
+        {step === "place" && <PlacePicker onInvestigated={() => actions.goTo("clues")} onBack={() => actions.goTo("home")} />}
 
         {(isResult || step === "place") && state.loading && (
           <Loading>
@@ -89,7 +87,7 @@ export function App() {
                 key={`${state.investigation!.id}:${analysis.variable.id}`}
                 variable={analysis.variable}
                 onBack={() => actions.goTo("verdict")}
-                onRestart={() => actions.goTo("theme")}
+                onRestart={() => actions.goTo("place")}
               />
             )}
           </div>

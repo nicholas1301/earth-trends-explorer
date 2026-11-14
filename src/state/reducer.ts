@@ -14,7 +14,8 @@ export interface Investigation {
 export interface State {
   /** Screen currently shown. */
   step: Step;
-  theme: ThemeId;
+  /** Topic filter on the clue board; null = all topics. */
+  topic: ThemeId | null;
   /** Place currently chosen in the picker (may differ from the investigated one). */
   place: Place;
   filters: Filters;
@@ -31,7 +32,7 @@ export interface State {
 
 export const initialState: State = {
   step: "home",
-  theme: "heat",
+  topic: null,
   place: placeFromPreset(PRESETS[0]),
   filters: { y0: FIRST_YEAR, y1: LAST_YEAR, season: "year" },
   view: "annual",
@@ -46,7 +47,7 @@ export const initialState: State = {
 
 export type Action =
   | { type: "setStep"; step: Step }
-  | { type: "setTheme"; theme: ThemeId }
+  | { type: "setTopic"; topic: ThemeId | null }
   | { type: "setPlace"; place: Place }
   | { type: "setFilters"; filters: Partial<Filters> }
   | { type: "setView"; view: ChartView }
@@ -69,8 +70,8 @@ export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "setStep":
       return { ...state, step: action.step };
-    case "setTheme":
-      return { ...state, theme: action.theme };
+    case "setTopic":
+      return { ...state, topic: action.topic };
     case "setPlace":
       return { ...state, place: action.place };
     case "setFilters":

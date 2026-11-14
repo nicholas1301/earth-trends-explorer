@@ -1,3 +1,18 @@
+.topic-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+.topic-filter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--bg);
+}
+.topic-filter button:hover { color: var(--text); }
+.topic-filter button[aria-pressed=true] { background: var(--text); border-color: var(--text); color: var(--inverse); }
+
 .clue-group { margin: 26px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--text); }
 .clue-group + .muted { margin-top: 12px; }
 .clues { margin-bottom: 12px; }

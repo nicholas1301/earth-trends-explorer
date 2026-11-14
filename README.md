@@ -53,21 +53,21 @@ src/
 ├── hooks/          useAsync, useElementWidth, useMapView (animations), useGeolocation
 └── components/
     ├── layout/     Header (logo, light/dark toggle), stepper, home with demo cases, help dialog
-    ├── setup/      Step 1 (topic) and step 2 (place picker map)
-    ├── results/    Filters, step 3 (clues), step 4 (verdict + evidence + Giovanni cross-check),
-    │               step 5 (“where is it changing?”), “analyze your own time series” (import screen)
+    ├── setup/      Step 1 (place picker map)
+    ├── results/    Filters, step 2 (clues, filterable by topic), step 3 (verdict + evidence + Giovanni cross-check),
+    │               step 4 (“where is it changing?”), “analyze your own time series” (import screen)
     ├── charts/     Interactive GeoMap, time series, monthly bars, regional grid map, world comparison, sparkline
     ├── tour/       Guided case walkthrough
     └── ui/         Small shared pieces (segmented control, legend, status, …)
 ```
 
-The app shows one screen per step (home → topic → place → clues → verdict → compare); the current step lives in
+The app shows one screen per step (home → place → clues → verdict → compare); the current step lives in
 the reducer (`state.step`). The visual identity follows the NASA Space Apps Challenge logo (`src/assets/`): black on
 white with a dark mode, Bebas Neue + Fira Sans (self-hosted via `@fontsource`), colours defined as CSS tokens in
 `src/styles/global.css`.
 
 Data flow: the user picks a place → `investigate()` fetches all variables once → the provider derives the
-trend of every variable for the current filters (`useMemo`) → components only render. Changing the theme,
+trend of every variable for the current filters (`useMemo`) → components only render. Changing the topic filter,
 period or season never refetches.
 
 ## Data sources

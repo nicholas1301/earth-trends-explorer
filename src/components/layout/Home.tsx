@@ -21,7 +21,7 @@ export function Home({ onStart, onStartDemo, onImport }: Props) {
           on our planet?
         </h2>
         <p className="lead">
-          Pick a topic and a place. We check {LAST_YEAR - FIRST_YEAR + 1} years of NASA data, test {VARIABLES.length} variables
+          Pick a place. We check {LAST_YEAR - FIRST_YEAR + 1} years of NASA data, test {VARIABLES.length} variables
           and tell you in plain words what is really changing.
         </p>
         <button type="button" className="primary big" onClick={onStart}>

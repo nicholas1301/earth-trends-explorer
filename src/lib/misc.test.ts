@@ -27,12 +27,12 @@ describe("niceTicks", () => {
 describe("readHash", () => {
   it("parses a shared link and validates fields", () => {
     const s = readHash("#lat=-3.1&lon=-60&v=T2M&t=water&y0=1990&y1=2010&s=djf");
-    expect(s).toMatchObject({ lat: -3.1, lon: -60, variable: "T2M", theme: "water", filters: { y0: 1990, y1: 2010, season: "djf" } });
+    expect(s).toMatchObject({ lat: -3.1, lon: -60, variable: "T2M", topic: "water", filters: { y0: 1990, y1: 2010, season: "djf" } });
   });
 
   it("ignores invalid values", () => {
     const s = readHash("#lat=1&lon=2&v=NOPE&t=nope&y0=2000&y1=2003");
-    expect(s).toMatchObject({ variable: null, theme: null, filters: {} });
+    expect(s).toMatchObject({ variable: null, topic: null, filters: {} });
     expect(readHash("#foo=1")).toBeNull();
   });
 });

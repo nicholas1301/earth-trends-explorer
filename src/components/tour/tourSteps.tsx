@@ -25,17 +25,14 @@ export function buildTourSteps(demo: Demo, actions: Actions): TourStep[] {
 
   return [
     {
-      step: "theme",
-      target: "q-theme",
-      run: () => actions.setTheme(demo.theme),
-      text: () => <>Every detective starts with a question. Ours: <b>{demo.title}</b> First we choose the topic — here, “{theme.name}”.</>,
-    },
-    {
       step: "place",
       target: "q-place",
       run: () => actions.setPlace(placeFromPreset(preset)),
       text: () => (
-        <>Then, the place: <b>{preset.name}</b> ({preset.region}), an example of {preset.tag}. You can also click any point on the globe.</>
+        <>
+          Every detective starts with a question. Ours: <b>{demo.title}</b> First we choose the place: <b>{preset.name}</b> ({preset.region}),
+          an example of {preset.tag}. You can also click any point on the globe.
+        </>
       ),
     },
     {
@@ -44,12 +41,14 @@ export function buildTourSteps(demo: Demo, actions: Actions): TourStep[] {
       run: async () => {
         actions.setFilters({ y0: FIRST_YEAR, y1: LAST_YEAR, season: "year" });
         actions.setView("annual");
+        actions.setTopic(demo.theme);
         await actions.investigate({ place: placeFromPreset(preset), variable: demo.variable });
       },
       text: () => (
         <>
           The tool downloaded the monthly NASA data since {FIRST_YEAR} and tested {VARIABLES.length} variables at once. Each row is a clue:
-          the thumbnail shows the series, and the label says whether it is rising or falling and how strong the evidence is.
+          the thumbnail shows the series, and the label says whether it is rising or falling and how strong the evidence is. The strongest
+          trends come first, and the topic filter narrows the list — here, “{theme.name}”.
         </>
       ),
     },
@@ -96,7 +95,7 @@ export function buildTourSteps(demo: Demo, actions: Actions): TourStep[] {
         actions.setWhereTab(demo.whereTab);
         actions.request(demo.whereTab);
       },
-      text: () => <>{demo.whereQuestion} Now it’s up to you: change the topic, the place or the period and follow the clues!</>,
+      text: () => <>{demo.whereQuestion} Now it’s up to you: change the place, the period or the topic and follow the clues!</>,
     },
   ];
 }
