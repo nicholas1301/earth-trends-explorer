@@ -3,7 +3,8 @@ import { formatCoord } from "../../lib/format";
 import { isLand } from "../../lib/geo";
 import type { LatLon } from "../../lib/mapView";
 import { reverseGeocode } from "../../lib/geocode";
-import { DEFAULT_PLACE_LABEL, makePlace, samePlace } from "../../lib/places";
+import { DEFAULT_PLACE_LABEL, MY_LOCATION_LABEL as MY_LOCATION, isRenamable, makePlace, samePlace } from "../../lib/places";
+import { type RenameError, cleanName } from "../../lib/savedPlaces";
 import { useGeolocation } from "../../hooks/useGeolocation";
 import { useSavedPlaces } from "../../hooks/useSavedPlaces";
 import { useInvestigation } from "../../state/InvestigationContext";
@@ -12,8 +13,6 @@ import { GeoMap, type MapMarker } from "../charts/GeoMap";
 import { PlaceSearch } from "./PlaceSearch";
 import { SectionHeading } from "../ui/SectionHeading";
 import "./PlacePicker.css";
-
-const MY_LOCATION = "Your location";
 
 interface Props {
   /** Called after a successful investigation started from the “Investigate” button. */
@@ -42,6 +41,17 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
   const isSaved = !!place && saved.has(place);
 
   const choose = useCallback((p: Place) => actions.setPlace(p), [actions]);
+
+  // The saved name can differ from the chosen one (numbered or renamed); keep the selected place in step.
+  const save = (p: Place) => {
+    const stored = saved.add(p);
+    if (stored && stored.name !== p.name) choose({ ...p, name: stored.name, customName: stored.customName });
+  };
+  const rename = (p: Place, name: string) => {
+    const error = saved.rename(p, name);
+    if (!error && place && samePlace(place, p)) choose({ ...place, name: cleanName(name), customName: true });
+    return error;
+  };
   const geo = useGeolocation(useCallback((lat, lon) => choose(makePlace(lat, lon, undefined, MY_LOCATION)), [choose]));
 
   // Any other choice clears the location message.
@@ -142,7 +152,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
                   aria-pressed={isSaved}
                   disabled={!isSaved && (saved.isFull || lookingUp)}
                   title={isSaved ? "Remove from saved places" : saved.isFull ? "Your list is full — remove a place first" : "Add to saved places"}
-                  onClick={() => (isSaved ? saved.remove(place) : saved.add(place))}
+                  onClick={() => (isSaved ? saved.remove(place) : save(place))}
                 >
                   <span aria-hidden="true">{isSaved ? "★" : "☆"}</span>
                   {isSaved ? "Saved" : "Save"}
@@ -178,9 +188,13 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
               <div className={`chips${editing ? " editing" : ""}`}>
                 {saved.places.map((p) =>
                   editing ? (
-                    <button key={`${p.lat},${p.lon}`} type="button" className="chip removable" aria-label={`Remove ${p.name}`} onClick={() => saved.remove(p)}>
-                      {p.name} <span aria-hidden="true">×</span>
-                    </button>
+                    isRenamable(p) ? (
+                      <RenamableChip key={`${p.lat},${p.lon}`} place={p} onRename={(name) => rename(p, name)} onRemove={() => saved.remove(p)} />
+                    ) : (
+                      <button key={`${p.lat},${p.lon}`} type="button" className="chip removable" aria-label={`Remove ${p.name}`} onClick={() => saved.remove(p)}>
+                        {p.name} <span aria-hidden="true">×</span>
+                      </button>
+                    )
                   ) : (
                     <button
                       key={`${p.lat},${p.lon}`}
@@ -200,6 +214,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
             )}
             <p className="muted saved-note">
               Saved in this browser. They are also compared side by side in step 4.
+              {editing && saved.places.some(isRenamable) && " Press ✎ to name a point saved without a name."}
               {(editing || saved.places.length === 0) && (
                 <>
                   {" "}
@@ -215,6 +230,66 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
         <button type="button" onClick={onBack}>← Home</button>
       </div>
     </section>
+  );
+}
+
+const RENAME_ERRORS: Record<RenameError, string> = {
+  empty: "Type a name.",
+  taken: "Another saved place already has this name.",
+};
+
+/** A saved chip in edit mode whose name can be changed in place. */
+function RenamableChip({ place, onRename, onRemove }: { place: Place; onRename(name: string): RenameError | null; onRemove(): void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const [error, setError] = useState<RenameError | null>(null);
+  const close = () => {
+    setDraft(null);
+    setError(null);
+  };
+
+  if (draft === null) {
+    return (
+      <span className="chip renamable">
+        <button type="button" aria-label={`Rename ${place.name}`} title="Rename" onClick={() => setDraft(place.name)}>
+          {place.name} <span aria-hidden="true">✎</span>
+        </button>
+        <button type="button" className="chip-remove" aria-label={`Remove ${place.name}`} onClick={onRemove}>
+          <span aria-hidden="true">×</span>
+        </button>
+      </span>
+    );
+  }
+
+  const errorId = `rename-error-${place.lat}-${place.lon}`;
+  return (
+    <form
+      className="chip-rename"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const err = onRename(draft);
+        if (err) setError(err);
+        else close();
+      }}
+    >
+      <input
+        type="text"
+        aria-label={`New name for ${place.name}`}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
+        maxLength={40}
+        value={draft}
+        autoFocus
+        onFocus={(e) => e.target.select()}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          setError(null);
+        }}
+        onKeyDown={(e) => e.key === "Escape" && close()}
+      />
+      <button type="submit" className="link">Save</button>
+      <button type="button" className="link" onClick={close}>Cancel</button>
+      {error && <span id={errorId} className="chip-rename-error" role="alert">{RENAME_ERRORS[error]}</span>}
+    </form>
   );
 }
 

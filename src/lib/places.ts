@@ -9,6 +9,13 @@ const round1 = (x: number) => Math.round(x * 10) / 10;
  * `label` names a non-preset point (default “Selected point”).
  */
 export const DEFAULT_PLACE_LABEL = "Selected point";
+/** Name of the point found with the browser's geolocation. */
+export const MY_LOCATION_LABEL = "Your location";
+
+const GENERIC_NAME = /^(Selected point|Your location)( \d+)?$/;
+
+/** Saved places the user may rename: the generic labels (also numbered, e.g. “Selected point 2”) and names they already chose. */
+export const isRenamable = (p: Pick<Place, "name" | "customName">) => !!p.customName || GENERIC_NAME.test(p.name);
 
 export function makePlace(lat: number, lon: number, preset?: Preset, label = DEFAULT_PLACE_LABEL): Place {
   lat = clamp(round1(lat), -89.5, 89.5);

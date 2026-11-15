@@ -39,6 +39,8 @@ export interface Place {
   region: string;
   /** Place type from a preset (e.g. "megacity"); null for arbitrary points. */
   tag: string | null;
+  /** True once the user renamed the place; set only on saved places. */
+  customName?: boolean;
 }
 
 export interface Season {
