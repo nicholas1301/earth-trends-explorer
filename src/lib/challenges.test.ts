@@ -44,10 +44,17 @@ describe("challenge catalog", () => {
 describe("arctic-rate", () => {
   const c = byId("arctic-rate");
 
-  it("ticks the tasks one by one", () => {
-    expect(evaluateChallenge(c, makeView("Niamey", "T2M", {})).tasks).toEqual([false, true]);
+  it("ticks the tasks one by one, in order", () => {
+    expect(evaluateChallenge(c, makeView("Niamey", "T2M", {})).tasks).toEqual([false, false]);
     expect(evaluateChallenge(c, makeView("Svalbard", "TS", {})).tasks).toEqual([true, false]);
     expect(evaluateChallenge(c, makeView("Svalbard", "T2M", {})).ready).toBe(true);
+  });
+
+  it("waits for each task's own screen", () => {
+    const view = makeView("Svalbard", "T2M", {});
+    expect(evaluateChallenge(c, { ...view, step: "place" }).tasks).toEqual([false, false]);
+    expect(evaluateChallenge(c, { ...view, step: "clues" }).tasks).toEqual([true, false]);
+    expect(evaluateChallenge(c, { ...view, step: "compare" }).ready).toBe(true);
   });
 
   it("derives the right band from the data", () => {
@@ -154,6 +161,8 @@ describe("world-fastest", () => {
   it("needs enough places on the comparison", () => {
     expect(evaluateChallenge(c, world([0.9, 0.5])).tasks).toEqual([true, true, false]);
     expect(evaluateChallenge(c, world([0.9, 0.7, 0.5, 0.3, 0.1])).ready).toBe(true);
+    // Enough places, but still on the Around here tab: neither Compare task ticks.
+    expect(evaluateChallenge(c, { ...world([0.9, 0.7, 0.5, 0.3, 0.1]), whereTab: "region" }).tasks).toEqual([true, false, false]);
     expect(MIN_WORLD_PLACES).toBeGreaterThan(2);
   });
 
@@ -169,7 +178,7 @@ describe("record-hunt", () => {
   const c = byId("record-hunt");
 
   it("needs a point that is not a preset and fast, significant warming", () => {
-    expect(evaluateChallenge(c, makeView("Svalbard", "T2M", { T2M: trendGrid(1) })).tasks).toEqual([false, true, true]);
+    expect(evaluateChallenge(c, makeView("Svalbard", "T2M", { T2M: trendGrid(1) })).tasks).toEqual([false, false, false]);
     expect(evaluateChallenge(c, makeView(null, "T2M", { T2M: trendGrid(FAST_WARMING / 2) })).tasks).toEqual([true, true, false]);
     expect(evaluateChallenge(c, makeView(null, "T2M", { T2M: trendGrid(1) })).ready).toBe(true);
   });

@@ -61,8 +61,10 @@ export interface ChallengeStatus {
   ready: boolean;
 }
 
+/** Tasks tick in order: one only counts once every task before it is done, so the card follows the journey. */
 export function evaluateChallenge(challenge: Challenge, view: ChallengeView | null): ChallengeStatus {
-  const tasks = challenge.tasks.map((t) => (view ? t.done(view) : false));
+  const tasks: boolean[] = [];
+  for (const t of challenge.tasks) tasks.push(!!view && (tasks.length === 0 || tasks[tasks.length - 1]) && t.done(view));
   return { tasks, ready: tasks.every(Boolean) };
 }
 

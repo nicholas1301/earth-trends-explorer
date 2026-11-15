@@ -39,14 +39,20 @@ export function isPlace(target: Place, place: Place): boolean {
   return d <= NEAR_KM || (d <= NAMED_KM && fold(`${place.name} ${place.region}`).includes(fold(target.name)));
 }
 
+// Each task waits for its own screen, so nothing ticks early from a previous investigation still in memory.
+
+/** The investigation is on screen (past the Place step). */
+const onResults = (v: ChallengeView) => v.step === "clues" || v.step === "verdict" || v.step === "compare";
+
 const investigate = (preset: Preset): Task => {
   const place = placeFromPreset(preset);
-  return { label: `Investigate ${preset.name}`, done: (v) => isPlace(place, v.place), place };
+  return { label: `Investigate ${preset.name}`, done: (v) => onResults(v) && isPlace(place, v.place), place };
 };
 
+/** Ticks once the variable’s verdict is shown (picked on the clue board), not while it is only remembered. */
 const open = (variableId: string): Task => ({
   label: `Open “${VARIABLE_BY_ID[variableId].name}”`,
-  done: (v) => v.variable === variableId,
+  done: (v) => (v.step === "verdict" || v.step === "compare") && v.variable === variableId,
 });
 
 const ok = (r: TrendResult | undefined): TrendOk | null => (r?.ok ? r : null);
@@ -57,7 +63,7 @@ const period = (v: ChallengeView) => `${v.filters.y0}–${v.filters.y1}`;
 const verdictIndex = (r: TrendOk) => (!isSignificant(r) ? 1 : r.direction > 0 ? 0 : 2);
 
 const compareTab = (tab: "region" | "world"): Task => ({
-  label: `Open Compare → ${tab === "region" ? "Around here" : "Across the world"}`,
+  label: tab === "region" ? "Compare with the area around it (step 4, “Around here”)" : "Compare with your saved places (step 4, “Across the world”)",
   done: (v) => v.step === "compare" && v.whereTab === tab && (tab === "region" ? !!v.region : !!v.world),
 });
 
@@ -235,7 +241,7 @@ export const CHALLENGES: Challenge[] = [
     tasks: [
       open("T2M"),
       compareTab("world"),
-      { label: `Compare at least ${MIN_WORLD_PLACES} places`, done: (v) => (v.world?.places.length ?? 0) >= MIN_WORLD_PLACES },
+      { label: `Have at least ${MIN_WORLD_PLACES} places in the comparison`, done: (v) => (v.world?.places.length ?? 0) >= MIN_WORLD_PLACES },
     ],
     hint:
       "“Across the world” shows the same variable at each of your saved places, with the fastest rise at the top of the bars. " +
@@ -268,7 +274,7 @@ export const CHALLENGES: Challenge[] = [
     title: "Record hunt: the fastest-warming place",
     summary: "Explore the globe on your own and try to beat your record.",
     tasks: [
-      { label: "Pick your own point on the globe (not a preset place)", done: (v) => !presetAt(v.place.lat, v.place.lon) },
+      { label: "Pick your own point on the globe (not a preset place)", done: (v) => onResults(v) && !presetAt(v.place.lat, v.place.lon) },
       open("T2M"),
       {
         label: `Find significant warming of at least ${formatNumber(FAST_WARMING, 1)} °C per decade`,
