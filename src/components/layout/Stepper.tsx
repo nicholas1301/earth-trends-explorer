@@ -4,8 +4,8 @@ import "./Stepper.css";
 
 const STEPS: Array<{ id: Step; label: string }> = [
   { id: "place", label: "Place" },
-  { id: "clues", label: "Clues" },
-  { id: "verdict", label: "Verdict" },
+  { id: "clues", label: "Trends" },
+  { id: "verdict", label: "Evidence" },
   { id: "compare", label: "Compare" },
 ];
 

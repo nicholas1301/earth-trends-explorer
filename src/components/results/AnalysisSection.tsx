@@ -115,7 +115,7 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
       )}
 
       <div className="step-nav">
-        <button type="button" onClick={onBack}>← All clues</button>
+        <button type="button" onClick={onBack}>← All trends</button>
         <button type="button" className="primary" onClick={onNext}>Where is it changing? →</button>
       </div>
     </section>

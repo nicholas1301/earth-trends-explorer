@@ -42,7 +42,7 @@ export function WhereSection({ variable, onBack, onRestart }: Props) {
       </div>
 
       <div className="step-nav" style={{ marginTop: 24 }}>
-        <button type="button" onClick={onBack}>← Verdict</button>
+        <button type="button" onClick={onBack}>← Evidence</button>
         <button type="button" onClick={onRestart}>Start a new investigation</button>
       </div>
     </section>

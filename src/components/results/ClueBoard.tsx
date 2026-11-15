@@ -35,7 +35,7 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
 
   return (
     <section id="sec-clues">
-      <SectionHeading title={`Clues in ${place.name}`} />
+      <SectionHeading title={`Trends in ${place.name}`} />
       <p className="lead">
         We tested {VARIABLES.length} variables: <b className="hl">{nSignificant}</b> {nSignificant === 1 ? "shows" : "show"} a significant
         trend. Pick one to see the evidence.
@@ -45,7 +45,7 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
         of rain per year
       </p>
 
-      <div className="topic-filter" role="group" aria-label="Filter clues by topic">
+      <div className="topic-filter" role="group" aria-label="Filter trends by topic">
         <button type="button" aria-pressed={topic === null} onClick={() => actions.setTopic(null)}>
           All topics
         </button>

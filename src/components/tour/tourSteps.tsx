@@ -46,7 +46,7 @@ export function buildTourSteps(demo: Demo, actions: Actions): TourStep[] {
       },
       text: () => (
         <>
-          The tool downloaded the monthly NASA data since {FIRST_YEAR} and tested {VARIABLES.length} variables at once. Each row is a clue:
+          The tool downloaded the monthly NASA data since {FIRST_YEAR} and tested {VARIABLES.length} variables at once. Each row is one variable:
           the thumbnail shows the series, and the label says whether it is rising or falling and how strong the evidence is. The strongest
           trends come first, and the topic filter narrows the list — here, “{theme.name}”.
         </>
