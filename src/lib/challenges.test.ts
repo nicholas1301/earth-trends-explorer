@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FIRST_YEAR, LAST_YEAR, PRESETS, VARIABLES } from "../config/catalog";
-import { CHALLENGES, FAST_WARMING, MIN_WORLD_PLACES } from "../config/challenges";
+import { CHALLENGES, FAST_WARMING } from "../config/challenges";
 import type { Filters, MonthlyGrid, PointData } from "../types";
 import { evaluateChallenge, parseProgress, withCompleted, withScore, type ChallengeView } from "./challenges";
 import { rankVariables, scanVariables } from "./clues";
@@ -144,33 +144,50 @@ describe("aral-around", () => {
   });
 });
 
-describe("world-fastest", () => {
-  const c = byId("world-fastest");
-  const world = (rates: number[]) => ({
-    ...makeView("Svalbard", "T2M", {}),
+describe("pole-to-pole", () => {
+  const c = byId("pole-to-pole");
+  const preset = (name: string) => PRESETS.find((p) => p.name === name)!;
+  /** Places on the comparison, as [name, rate]; sorted fastest first like the real one. */
+  const world = (entries: Array<[string, number]>) => ({
+    ...makeView("Yakutsk", "T2M", {}),
     step: "compare" as const,
     whereTab: "world" as const,
     world: {
       investigationId: 1,
       variable: "T2M",
       filters: FULL,
-      places: rates.map((r, i) => ({ name: `Place ${String.fromCharCode(65 + i)}`, perDecade: r, significant: true, isCurrent: i === 2 })),
+      places: entries
+        .map(([name, r]) => ({ name, lat: preset(name).lat, lon: preset(name).lon, perDecade: r, significant: true, isCurrent: name === "Yakutsk" }))
+        .sort((a, b) => b.perDecade - a.perDecade),
     },
   });
+  const FOUR: Array<[string, number]> = [["Yakutsk", 0.6], ["Manaus", 0.3], ["Antarctic Peninsula", 0.2], ["Equatorial Pacific", 0.1]];
 
-  it("needs enough places on the comparison", () => {
-    expect(evaluateChallenge(c, world([0.9, 0.5])).tasks).toEqual([true, true, false]);
-    expect(evaluateChallenge(c, world([0.9, 0.7, 0.5, 0.3, 0.1])).ready).toBe(true);
-    // Enough places, but still on the Around here tab: neither Compare task ticks.
-    expect(evaluateChallenge(c, { ...world([0.9, 0.7, 0.5, 0.3, 0.1]), whereTab: "region" }).tasks).toEqual([true, false, false]);
-    expect(MIN_WORLD_PLACES).toBeGreaterThan(2);
+  it("is a Master challenge", () => {
+    expect(c.level).toBe("master");
   });
 
-  it("asks for the leader of the ranking", () => {
-    const quiz = c.quiz!(world([0.9, 0.7, 0.5, 0.4, 0.3, 0.2, 0.1]))!;
-    expect(quiz.options[quiz.correct]).toBe("Place A");
+  it("needs the four places on the comparison", () => {
+    expect(evaluateChallenge(c, world(FOUR.slice(0, 3))).tasks).toEqual([true, true, true, false]);
+    expect(evaluateChallenge(c, world([...FOUR, ["Svalbard", 0.9]])).ready).toBe(true);
+    // Investigating somewhere else does not count, even with all four saved.
+    expect(evaluateChallenge(c, { ...world(FOUR), place: placeFromPreset(preset("Svalbard")) }).tasks[0]).toBe(false);
+  });
+
+  it("finds renamed saved places by position", () => {
+    const renamed = world(FOUR);
+    renamed.world.places = renamed.world.places.map((p) => (p.name === "Manaus" ? { ...p, name: "My rainforest" } : p));
+    expect(evaluateChallenge(c, renamed).ready).toBe(true);
+    // Options use the name shown on the bars.
+    expect(c.quiz!(renamed)!.options.join()).toContain("My rainforest");
+  });
+
+  it("asks for the order of the four, ignoring other places", () => {
+    const quiz = c.quiz!(world([...FOUR, ["Svalbard", 0.9], ["Delhi", 0.25]]))!;
     expect(quiz.options).toHaveLength(4);
-    expect(quiz.explain).toContain("ranks 3 of 7");
+    expect(new Set(quiz.options).size).toBe(4);
+    expect(quiz.options[quiz.correct]).toBe("Yakutsk › Manaus › Antarctic Peninsula › Equatorial Pacific");
+    expect(quiz.options.join()).not.toContain("Svalbard");
   });
 });
 

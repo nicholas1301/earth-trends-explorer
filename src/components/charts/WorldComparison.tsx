@@ -92,7 +92,7 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
       investigationId: investigation.id,
       variable: v.id,
       filters: state.filters,
-      places: comparison.ok.map((p) => ({ name: p.name, perDecade: perDecade(p.result), significant: isSignificant(p.result), isCurrent: p.isCurrent })),
+      places: comparison.ok.map((p) => ({ name: p.name, lat: p.lat, lon: p.lon, perDecade: perDecade(p.result), significant: isSignificant(p.result), isCurrent: p.isCurrent })),
     });
   }, [comparison, investigation.id, v.id, state.filters]);
   useEffect(() => () => publishCompare("world", null), []);

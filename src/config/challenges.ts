@@ -23,6 +23,10 @@ const PLACES = {
   aral: { name: "Aral Sea", region: "Central Asia", lat: 45.0, lon: 60.0, tag: "shrinking lake" },
   saoPaulo: { name: "São Paulo", region: "Brazil", lat: -23.5, lon: -46.6, tag: "megacity" },
   niamey: { name: "Niamey", region: "Sahel", lat: 13.5, lon: 2.1, tag: "desert edge" },
+  yakutsk: { name: "Yakutsk", region: "Siberia", lat: 62.0, lon: 129.7, tag: "permafrost" },
+  antarctic: { name: "Antarctic Peninsula", region: "Antarctica", lat: -64.8, lon: -62.9, tag: "polar" },
+  pacific: { name: "Equatorial Pacific", region: "El Niño region", lat: 0.0, lon: -150.0, tag: "ocean" },
+  manaus: { name: "Manaus", region: "Central Amazon", lat: -3.1, lon: -60.0, tag: "tropical rainforest" },
 } satisfies Record<string, Preset>;
 
 /** A point this close (km) counts as the place, however it was chosen (search, globe, coordinates or saved list). */
@@ -67,8 +71,14 @@ const compareTab = (tab: "region" | "world"): Task => ({
   done: (v) => v.step === "compare" && v.whereTab === tab && (tab === "region" ? !!v.region : !!v.world),
 });
 
-/** Places the world comparison needs before its ranking says anything. */
-export const MIN_WORLD_PLACES = 4;
+/** The places of a world comparison that are the given preset (matched by position, so renamed saved places still count). */
+const findInWorld = (v: ChallengeView, preset: Preset) => {
+  const target = placeFromPreset(preset);
+  return v.world?.places.find((p) => isPlace(target, { name: p.name, region: "", lat: p.lat, lon: p.lon, tag: null })) ?? null;
+};
+
+/** The pole-to-pole line-up: investigated first, the others must be in the saved places. */
+const POLE_TO_POLE = [PLACES.yakutsk, PLACES.antarctic, PLACES.pacific, PLACES.manaus];
 
 /** A point whose change is this many times the area mean counts as a local story. */
 const LOCAL_RATIO = 1.5;
@@ -233,37 +243,44 @@ export const CHALLENGES: Challenge[] = [
     },
   },
   {
-    id: "world-fastest",
-    level: "detective",
+    id: "pole-to-pole",
+    level: "master",
     theme: "heat",
-    title: "Which of your places warms fastest?",
-    summary: "Line up your saved places and read the ranking.",
+    title: "Pole to pole: who warms fastest?",
+    summary: "Rank Siberia, Antarctica, the open Pacific and the Amazon by how fast they warm.",
     tasks: [
+      investigate(PLACES.yakutsk),
       open("T2M"),
       compareTab("world"),
-      { label: `Have at least ${MIN_WORLD_PLACES} places in the comparison`, done: (v) => (v.world?.places.length ?? 0) >= MIN_WORLD_PLACES },
+      {
+        label: `Have ${POLE_TO_POLE.slice(1).map((p) => p.name).join(", ").replace(/, ([^,]*)$/, " and $1")} in the comparison`,
+        done: (v) => POLE_TO_POLE.every((p) => findInWorld(v, p)),
+      },
     ],
     hint:
-      "“Across the world” shows the same variable at each of your saved places, with the fastest rise at the top of the bars. " +
-      "If the list is short, add places with ☆ Save on step 1 (Place).",
+      "“Across the world” ranks your saved places with the fastest rise at the top of the bars. If one of the four is missing, " +
+      "go back to step 1 (Place), choose it and press ☆ Save, then investigate Yakutsk again. Only these four count: read their order, ignore the others.",
     quiz(v) {
-      const list = v.world?.places;
-      if (!list || list.length < MIN_WORLD_PLACES) return null;
-      const top = list[0];
-      // The leader plus three others spread along the ranking, so the answer has to be read, not guessed.
-      const picks = [0, Math.round(list.length / 3), Math.round((2 * list.length) / 3), list.length - 1];
-      const options = [...new Set(picks.map((i) => list[i].name))].sort();
-      if (options.length < 2) return null;
-      const here = list.findIndex((p) => p.isCurrent);
-      const fmt = (x: number) => `${formatSigned(x, VARIABLE_BY_ID.T2M.digits)} °C per decade`;
+      const found = POLE_TO_POLE.map((p) => findInWorld(v, p));
+      if (found.some((p) => !p)) return null;
+      // Under the names the bars show, which may be the user's own for a renamed saved place.
+      const ranked = found.map((p) => p!).sort((a, b) => b.perDecade - a.perDecade);
+      if (ranked.some((p, i) => i > 0 && p.perDecade === ranked[i - 1].perDecade)) return null;
+      const order = (ix: number[]) => ix.map((i) => ranked[i].name).join(" › ");
+      // Near misses (one neighbouring pair swapped) and the reverse, so the bars have to be read carefully.
+      const right = order([0, 1, 2, 3]);
+      const options = [right, order([1, 0, 2, 3]), order([0, 1, 3, 2]), order([3, 2, 1, 0])].sort();
+      const fmt = (p: (typeof ranked)[number]) =>
+        `${p.name} ${formatSigned(p.perDecade, VARIABLE_BY_ID.T2M.digits)} °C${p.significant ? "" : " (not significant)"}`;
       return {
-        question: `Among the ${list.length} places compared, which one has the fastest-rising air temperature?`,
+        question: "From fastest to slowest, how does the air temperature of these four places rise?",
         options,
-        correct: options.indexOf(top.name),
+        correct: options.indexOf(right),
         explain:
-          `${top.name} leads with ${fmt(top.perDecade)}${top.significant ? "" : " (not significant)"}, against ${fmt(list[list.length - 1].perDecade)} at ${list[list.length - 1].name}. ` +
-          (here > 0 ? `${list[here].name}, the place you investigated, ranks ${here + 1} of ${list.length}. ` : "") +
-          "Warming is global but uneven: high latitudes and continents usually climb fastest, oceans and the tropics more slowly.",
+          `Per decade, over ${period(v)}: ${ranked.map(fmt).join("; ")}. ` +
+          "Warming is global but uneven. Land far from the sea, like Siberia, heats up fastest, helped by thawing snow and permafrost; " +
+          "the open ocean stores heat in its depths and warms slowly, with El Niño years shaking its record; " +
+          "and Antarctica, ringed by the cold Southern Ocean, does not mirror the Arctic — its peninsula warmed fast, then paused.",
       };
     },
   },

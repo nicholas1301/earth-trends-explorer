@@ -25,7 +25,7 @@ export interface RegionSummary extends CompareKey {
 
 /** “Across the world”: the trend at each saved place, fastest rise first. */
 export interface WorldSummary extends CompareKey {
-  places: Array<{ name: string; perDecade: number; significant: boolean; isCurrent: boolean }>;
+  places: Array<{ name: string; lat: number; lon: number; perDecade: number; significant: boolean; isCurrent: boolean }>;
 }
 
 export interface CompareResults {
