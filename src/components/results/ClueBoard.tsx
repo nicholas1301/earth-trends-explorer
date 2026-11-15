@@ -66,7 +66,7 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
       <div className="clues">{(showAll ? inTopic : notable).map(row)}</div>
       {hidden > 0 && (
         <button type="button" className="link" onClick={() => setShowAll(!showAll)}>
-          {showAll ? "Show only significant trends" : `Show the other ${hidden} variable`}{hidden > 1? 's' : ''}
+          {showAll ? "Show only significant trends" : `Show the other ${hidden} variable${hidden > 1? 's' : ''}`}
         </button>
       )}
       <div className="step-nav" style={{ marginTop: 24 }}>
