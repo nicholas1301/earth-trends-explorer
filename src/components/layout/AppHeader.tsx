@@ -9,7 +9,7 @@ export function AppHeader({ onHome, onHelp }: { onHome(): void; onHelp(): void }
   return (
     <header className="app-header">
       <button type="button" className="brand" onClick={onHome} title="Back to the start">
-        <SpaceAppsLogo className="brand-logo" />
+        <SpaceAppsLogo className="brand-logo" markOnly />
         <h1>Earth Trends Detective</h1>
       </button>
       <div className="header-actions">

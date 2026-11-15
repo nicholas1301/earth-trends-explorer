@@ -3,3 +3,7 @@
 .space-apps-logo .on-dark { display: none; }
 :root[data-theme="dark"] .space-apps-logo .on-light { display: none; }
 :root[data-theme="dark"] .space-apps-logo .on-dark { display: block; }
+
+/* Symbol only: the source images are 1693x600 and the symbol sits at x≈70–700. */
+.space-apps-logo.mark-only { aspect-ratio: 630 / 600; overflow: hidden; }
+.space-apps-logo.mark-only img { flex: none; margin-left: -11.11%; /* 70 / 630 */ }
