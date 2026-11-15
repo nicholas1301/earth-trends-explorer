@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
-import { VARIABLE_BY_ID, VARIABLE_IDS, seasonById } from "../config/catalog";
+import { ALL_VARIABLES, VARIABLE_IDS, seasonById } from "../config/catalog";
 import { rankVariables, scanVariables, typicalClues, type Scan } from "../lib/clues";
 import { profilePlace } from "../lib/geo";
 import { makePlace } from "../lib/places";
+import { loadExtras } from "../lib/extras";
 import { describeError, fetchPoint } from "../lib/powerApi";
 import type { TrendResult } from "../lib/trend";
 import { readHash, writeHash } from "../lib/urlHash";
@@ -34,6 +35,8 @@ export interface Actions {
 /** Derived data for the investigated place, recomputed when the data or filters change. */
 export interface Analysis {
   scan: Scan;
+  /** Variables tested at this place (NASA POWER plus any stored extra records). */
+  variables: Variable[];
   ranked: Variable[];
   hints: Set<string>;
   season: Season;
@@ -71,16 +74,23 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
       if (!place) return false;
       dispatch({ type: "investigationStarted" });
       try {
-        const data = await fetchPoint(place.lat, place.lon, VARIABLE_IDS);
+        const [power, extras] = await Promise.all([
+          fetchPoint(place.lat, place.lon, VARIABLE_IDS),
+          // A missing or broken extras file must not block the NASA POWER investigation.
+          loadExtras(place.lat, place.lon).catch(() => null),
+        ]);
         if (id !== requestId.current) return false;
+        const data = { ...power, ...extras?.data };
+        const variables = ALL_VARIABLES.filter((v) => !v.extra || data[v.id]);
         const profile = profilePlace(data, place.lat, place.lon);
-        let variable = options.variable && VARIABLE_BY_ID[options.variable] ? options.variable : null;
+        let variable = options.variable && variables.some((v) => v.id === options.variable) ? options.variable : null;
         if (!variable) {
-          const scan = scanVariables(data, stateRef.current.filters);
-          const ranked = rankVariables(scan);
+          const scan = scanVariables(data, stateRef.current.filters, variables);
+          const ranked = rankVariables(scan, variables);
           variable = (ranked.find((v) => scan[v.id].ok) ?? ranked[0]).id;
         }
-        dispatch({ type: "investigationSucceeded", investigation: { id, place, data, profile }, variable });
+        const investigation = { id, place, data, profile, variables, extraSources: extras?.sources ?? {} };
+        dispatch({ type: "investigationSucceeded", investigation, variable });
         return true;
       } catch (e) {
         if (id === requestId.current) dispatch({ type: "investigationFailed", error: describeError(e) });
@@ -126,7 +136,10 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
     }
   }, [investigation, variable, topic, filters]);
 
-  const scan = useMemo(() => (investigation ? scanVariables(investigation.data, filters) : null), [investigation, filters]);
+  const scan = useMemo(
+    () => (investigation ? scanVariables(investigation.data, filters, investigation.variables) : null),
+    [investigation, filters],
+  );
 
   const analysis = useMemo<Analysis | null>(() => {
     if (!investigation || !scan) return null;
@@ -134,10 +147,11 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
     return {
       scan,
       hints,
-      ranked: rankVariables(scan),
+      variables: investigation.variables,
+      ranked: rankVariables(scan, investigation.variables),
       season: seasonById(filters.season),
-      variable: variable ? VARIABLE_BY_ID[variable] : null,
-      result: variable ? scan[variable] : null,
+      variable: investigation.variables.find((v) => v.id === variable) ?? null,
+      result: variable ? scan[variable] ?? null : null,
     };
   }, [investigation, scan, variable, filters.season]);
 

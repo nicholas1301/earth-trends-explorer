@@ -47,6 +47,9 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
   const { variable: v, result: r, season } = analysis;
   const investigation = state.investigation!;
   if (!v || !r) return null;
+  // Extra records start around 2000: the chart starts with the data instead of showing empty years.
+  const chartY0 = v.extra && r.ok ? Math.max(state.filters.y0, r.years[0]) : state.filters.y0;
+  const source = sourceOf(v, investigation.extraSources[v.id]);
 
   return (
     <section id="sec-chart" className="stack">
@@ -58,7 +61,8 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
       {!r.ok ? (
         <Notice>
           There is not enough data for this variable in this period (at least 8 valid years are required
-          {v.id === "AOD_55" && "; aerosols only have data from 2001 onward"}). Widen the period or choose another time of year.
+          {v.id === "AOD_55" && "; aerosols only have data from 2001 onward"}
+          {v.extra && `; this record starts in ${v.extra.since}`}). Widen the period or choose another time of year.
         </Notice>
       ) : (
         <>
@@ -82,7 +86,7 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
               result={r}
               grid={investigation.data[v.id]}
               months={season.months}
-              y0={state.filters.y0}
+              y0={chartY0}
               y1={state.filters.y1}
               view={state.view}
               seriesLabel={seriesLabel(state.view, season)}
@@ -97,18 +101,19 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
             <MonthlyTrendBars variable={v} grid={investigation.data[v.id]} y0={state.filters.y0} y1={state.filters.y1} />
           </div>
 
+          {v.extra && <ExtraNote variable={v} />}
           <CrossCheck variable={v} place={investigation.place} filters={state.filters} onImport={() => actions.goTo("import")} />
 
           <details>
             <summary>Show the statistics</summary>
             <StatTiles variable={v} result={r} />
             <p className="muted" style={{ marginTop: 10 }}>
-              Source: {v.source} · unit: {v.unit}
+              Source: {source} · unit: {v.unit}
             </p>
           </details>
           <details>
             <summary>Show the data and export</summary>
-            <ExportActions variable={v} result={r} />
+            <ExportActions variable={v} result={r} source={source} />
             <DataTable variable={v} result={r} />
           </details>
         </>
@@ -122,12 +127,29 @@ export function AnalysisSection({ analysis, onBack, onNext, onHelp }: Props) {
   );
 }
 
-function ExportActions({ variable: v, result: r }: { variable: Variable; result: TrendOk }) {
+/** Full source line: NASA POWER and its model, or the exact dataset of an extra record. */
+function sourceOf(v: Variable, dataset?: string): string {
+  if (!v.extra) return `NASA POWER (${v.source})`;
+  return `${v.source} — ${dataset ?? `${v.extra.product}, via NASA ${v.extra.tool}`}`;
+}
+
+/** Where an extra record comes from and what area it represents, since it is not on the NASA POWER grid. */
+function ExtraNote({ variable: v }: { variable: Variable }) {
+  const extra = v.extra!;
+  return (
+    <p className="muted" style={{ margin: 0 }}>
+      This record is not from NASA POWER: it comes from {v.source}, downloaded from NASA {extra.tool} and stored in this
+      app for the featured places. Each value is the {extra.scope}, from {extra.since} onward.
+    </p>
+  );
+}
+
+function ExportActions({ variable: v, result: r, source }: { variable: Variable; result: TrendOk; source: string }) {
   const { state } = useInvestigation();
   const [message, setMessage] = useState("");
   const place = state.investigation!.place;
 
-  const downloadCsv = () => downloadText(trendCsv(v, r, place, state.filters), `trend_${v.id}_${place.lat}_${place.lon}.csv`);
+  const downloadCsv = () => downloadText(trendCsv(v, r, place, state.filters, source), `trend_${v.id}_${place.lat}_${place.lon}.csv`);
 
   const copyLink = async () => {
     try {

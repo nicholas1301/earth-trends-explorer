@@ -1,0 +1,19 @@
+[
+  { "name": "Manaus", "region": "Central Amazon", "lat": -3.1, "lon": -60.0, "tag": "tropical rainforest" },
+  { "name": "Pantanal", "region": "Brazil", "lat": -17.5, "lon": -57.0, "tag": "wetland" },
+  { "name": "Petrolina", "region": "Northeastern backlands", "lat": -9.4, "lon": -40.5, "tag": "semi-arid" },
+  { "name": "São Paulo", "region": "Brazil", "lat": -23.5, "lon": -46.6, "tag": "megacity" },
+  { "name": "Niamey", "region": "Sahel", "lat": 13.5, "lon": 2.1, "tag": "desert edge" },
+  { "name": "Tamanrasset", "region": "Sahara", "lat": 22.8, "lon": 5.5, "tag": "desert" },
+  { "name": "Svalbard", "region": "Arctic", "lat": 78.2, "lon": 15.6, "tag": "polar" },
+  { "name": "Yakutsk", "region": "Siberia", "lat": 62.0, "lon": 129.7, "tag": "permafrost" },
+  { "name": "Alps", "region": "Switzerland", "lat": 46.5, "lon": 9.8, "tag": "snowy mountain" },
+  { "name": "Delhi", "region": "India", "lat": 28.6, "lon": 77.2, "tag": "megacity" },
+  { "name": "Beijing", "region": "China", "lat": 39.9, "lon": 116.4, "tag": "megacity" },
+  { "name": "Ganges Delta", "region": "Bangladesh", "lat": 22.0, "lon": 89.5, "tag": "estuary" },
+  { "name": "Aral Sea", "region": "Central Asia", "lat": 45.0, "lon": 60.0, "tag": "shrinking lake" },
+  { "name": "Central Valley", "region": "California", "lat": 36.6, "lon": -119.8, "tag": "irrigated farmland" },
+  { "name": "Murray-Darling", "region": "Australia", "lat": -34.0, "lon": 145.0, "tag": "semi-arid farmland" },
+  { "name": "Equatorial Pacific", "region": "El Niño region", "lat": 0.0, "lon": -150.0, "tag": "ocean" },
+  { "name": "Antarctic Peninsula", "region": "Antarctica", "lat": -64.8, "lon": -62.9, "tag": "polar" }
+]

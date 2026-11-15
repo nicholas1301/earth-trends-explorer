@@ -1,0 +1,45 @@
+{
+  "_comment": "How scripts/fetch-extras.mjs obtains each extra variable. Keys must match EXTRA_VARIABLES in src/config/extraVariables.ts (a test checks it). 'candidates' are tried in order until one answers; 'transform' is applied to every sample before the monthly mean.",
+  "samplers": {
+    "local": { "halfSteps": 1, "step": 0.005, "about": "3 × 3 points over about 1 km, so one odd pixel (a river, a road) does not decide the value" },
+    "regional": { "halfSteps": 2, "step": 0.05, "about": "5 × 5 points over about 22 km, for fire, which is rare at any single pixel" }
+  },
+  "variables": {
+    "NDVI": { "tool": "appeears", "sampler": "local", "product": "MOD13Q1.061", "layer": "_250m_16_days_NDVI", "qa": { "layer": "_250m_16_days_pixel_reliability", "keep": [0, 1] }, "valid": [-0.2, 1] },
+    "EVI": { "tool": "appeears", "sampler": "local", "product": "MOD13Q1.061", "layer": "_250m_16_days_EVI", "qa": { "layer": "_250m_16_days_pixel_reliability", "keep": [0, 1] }, "valid": [-0.2, 1] },
+    "LAI": { "tool": "appeears", "sampler": "local", "product": "MOD15A2H.061", "layer": "Lai_500m", "valid": [0, 10] },
+    "GPP": { "tool": "appeears", "sampler": "local", "product": "MOD17A2HGF.061", "layer": "Gpp_500m", "valid": [0, 3], "transform": { "multiply": 125 } },
+    "TREE_COVER": { "tool": "appeears", "sampler": "local", "product": "MOD44B.061", "layer": "Percent_Tree_Cover", "valid": [0, 100], "annual": true },
+    "BURNED_AREA": { "tool": "appeears", "sampler": "regional", "product": "MCD64A1.061", "layer": "Burn_Date", "transform": { "share": { "hit": [[1, 366]], "valid": [[0, 366]] } } },
+    "FIRE_FREQ": { "tool": "appeears", "sampler": "regional", "product": "MOD14A2.061", "layer": "FireMask", "transform": { "share": { "hit": [[7, 9]], "valid": [[5, 5], [7, 9]] } } },
+    "LST_DAY": { "tool": "appeears", "sampler": "local", "product": "MOD11A2.061", "layer": "LST_Day_1km", "valid": [150, 400], "transform": { "add": -273.15 } },
+    "LST_NIGHT": { "tool": "appeears", "sampler": "local", "product": "MOD11A2.061", "layer": "LST_Night_1km", "valid": [150, 400], "transform": { "add": -273.15 } },
+    "ET_MODIS": { "tool": "appeears", "sampler": "local", "product": "MOD16A2GF.061", "layer": "ET_500m", "valid": [0, 3000], "transform": { "multiply": 0.125 } },
+    "SNOW_COVER": { "tool": "appeears", "sampler": "local", "product": "MOD10A2.061", "layer": "Maximum_Snow_Extent", "transform": { "share": { "hit": [[200, 200]], "valid": [[25, 25], [200, 200]] } } },
+
+    "RUNOFF": { "tool": "giovanni", "start": "2000-01-01", "sum": [["GLDAS_NOAH025_M_2_1_Qs_acc"], ["GLDAS_NOAH025_M_2_1_Qsb_acc"]], "transform": { "multiply": 8 } },
+    "SOILM_DEEP": { "tool": "giovanni", "start": "2000-01-01", "candidates": ["GLDAS_NOAH025_M_2_1_SoilMoi100_200cm_inst"] },
+    "SWE": { "tool": "giovanni", "start": "2000-01-01", "candidates": ["GLDAS_NOAH025_M_2_1_SWE_inst"] },
+    "NO2": { "tool": "giovanni", "start": "2004-10-01", "candidates": ["OMNO2d_003_ColumnAmountNO2TropCloudScreened", "OMNO2d_003_ColumnAmountNO2Trop"], "transform": { "multiply": 1e-15 } },
+    "SO2": { "tool": "giovanni", "start": "2004-10-01", "candidates": ["OMSO2e_003_ColumnAmountSO2"] },
+    "UV_INDEX": { "tool": "giovanni", "start": "2004-10-01", "candidates": ["OMUVBd_003_UVindex"] },
+    "PM25": {
+      "tool": "giovanni",
+      "start": "1980-01-01",
+      "chunkYears": 3,
+      "sum": [["M2T1NXAER_5_12_4_DUSMASS25"], ["M2T1NXAER_5_12_4_SSSMASS25"], ["M2T1NXAER_5_12_4_BCSMASS"], ["M2T1NXAER_5_12_4_OCSMASS"], ["M2T1NXAER_5_12_4_SO4SMASS"]],
+      "weights": [1, 1, 1, 1.4, 1.375],
+      "transform": { "multiply": 1e9 }
+    },
+    "DUST": { "tool": "giovanni", "start": "1980-01-01", "chunkYears": 3, "candidates": ["M2T1NXAER_5_12_4_DUSMASS25"], "transform": { "multiply": 1e9 } },
+    "BLACK_CARBON": { "tool": "giovanni", "start": "1980-01-01", "chunkYears": 3, "candidates": ["M2T1NXAER_5_12_4_BCSMASS"], "transform": { "multiply": 1e9 } },
+    "OLR": { "tool": "giovanni", "start": "2002-09-01", "candidates": ["AIRS3STM_7_0_OLR_A", "AIRX3STM_006_OLR_A"] },
+    "CLOUD_TOP_T": { "tool": "giovanni", "start": "2002-09-01", "candidates": ["AIRS3STM_7_0_CloudTopTemp_A"], "kelvinIfAbove": 150 }
+  },
+  "_notAvailable": {
+    "CO": "MOPITT (MOP03JM/MOP03TM) and AIRS CO profiles are in the Giovanni catalog but the time-series API rejects them ('Data parameter is invalid', checked 2026-11-15).",
+    "CH4": "AIRS methane exists only as a pressure profile (CH4_VMR), which the time-series API rejects; the GES DISC on-premises OPeNDAP server is retired.",
+    "CHLOR_A": "MODIS-Aqua and SeaWiFS chlorophyll are rejected by the time-series API; only the ocean preset would have it.",
+    "MERRA-2 monthly aerosols": "M2TMNXAER answers 'currently unavailable', so the hourly M2T1NXAER is averaged per month, requested in 3-year pieces (longer ones exceed the API's size limit)."
+  }
+}

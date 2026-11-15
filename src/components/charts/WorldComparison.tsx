@@ -3,6 +3,7 @@ import { seasonById } from "../../config/catalog";
 import { directionColor, divergingColor, warmPoleSign } from "../../lib/colors";
 import { publishCompare } from "../../lib/compareResults";
 import { formatSigned } from "../../lib/format";
+import { loadExtras, placesWithExtras } from "../../lib/extras";
 import { samePlace } from "../../lib/places";
 import { fetchPoint } from "../../lib/powerApi";
 import { clamp } from "../../lib/stats";
@@ -32,15 +33,16 @@ interface ComparisonPlace {
   grid: MonthlyGrid | null;
 }
 
-/** Downloads one variable for many places with a small worker pool, reporting progress. */
-async function loadPlaces(places: ComparisonPlace[], variableId: string, onProgress: (done: number) => void) {
+/** Downloads one variable for many places with a small worker pool, reporting progress. Extra records are read from the
+ * files stored for the featured places instead of NASA POWER. */
+async function loadPlaces(places: ComparisonPlace[], v: Variable, onProgress: (done: number) => void) {
   const queue = places.filter((p) => !p.grid);
   let done = places.length - queue.length;
   onProgress(done);
   const worker = async () => {
     for (let p = queue.shift(); p; p = queue.shift()) {
       try {
-        p.grid = (await fetchPoint(p.lat, p.lon, [variableId]))[variableId];
+        p.grid = v.extra ? (await loadExtras(p.lat, p.lon))?.data[v.id] ?? null : (await fetchPoint(p.lat, p.lon, [v.id]))[v.id];
       } catch {
         p.grid = null;
       }
@@ -60,15 +62,17 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
   const saved = useSavedPlaces();
   const savedKey = saved.places.map((p) => `${p.lat},${p.lon}`).join(";");
 
+  // Extra records exist only at the featured places, so those are the comparison; otherwise, the saved places.
+  const sources = v.extra ? placesWithExtras() : saved.places;
   const initialPlaces = (): ComparisonPlace[] => {
-    const list: ComparisonPlace[] = saved.places.map((p) => ({ name: p.name, tag: p.tag ?? "", lat: p.lat, lon: p.lon, isCurrent: samePlace(p, current), grid: null }));
+    const list: ComparisonPlace[] = sources.map((p) => ({ name: p.name, tag: p.tag ?? "", lat: p.lat, lon: p.lon, isCurrent: samePlace(p, current), grid: null }));
     if (!list.some((p) => p.isCurrent)) list.push({ name: current.name, tag: current.tag ?? "", lat: current.lat, lon: current.lon, isCurrent: true, grid: null });
     for (const p of list) if (p.isCurrent) p.grid = investigation.data[v.id];
     return list;
   };
 
-  const total = saved.places.length + (saved.has(current) ? 0 : 1);
-  const { data: places, retry } = useAsync(() => loadPlaces(initialPlaces(), v.id, setProgress), [v.id, investigation.id, savedKey]);
+  const total = sources.length + (sources.some((p) => samePlace(p, current)) ? 0 : 1);
+  const { data: places, retry } = useAsync(() => loadPlaces(initialPlaces(), v, setProgress), [v.id, investigation.id, savedKey]);
 
   const comparison = useMemo(() => {
     if (!places) return null;
@@ -103,7 +107,7 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
   const savePrompt = !saved.has(current) && !saved.isFull && (
     <button type="button" className="link" onClick={() => saved.add(current)}>☆ Save {current.name}</button>
   );
-  if (saved.places.length === 0 || (saved.places.length === 1 && saved.has(current))) {
+  if (!v.extra && (saved.places.length === 0 || (saved.places.length === 1 && saved.has(current)))) {
     return (
       <p className="muted">
         There is nothing to compare with yet: your saved places list {saved.places.length ? "only has this place" : "is empty"}. Add places with ☆ Save on
@@ -188,7 +192,9 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
             Filled bar and ● = significant (p &lt; 0.05); hollow bar = not significant. Click a place to investigate it.
           </p>
           <p className="muted" style={{ marginTop: 4 }}>
-            These are your saved places; edit the list on step 1 (Place). {savePrompt}
+            {v.extra
+              ? "These are the featured places: the only ones where this record is stored."
+              : <>These are your saved places; edit the list on step 1 (Place). {savePrompt}</>}
           </p>
         </div>
       </div>

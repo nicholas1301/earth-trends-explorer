@@ -1,4 +1,6 @@
 import type { Preset, Season, Theme, ThemeId, Variable } from "../types";
+import { EXTRA_VARIABLES } from "./extraVariables";
+import presetList from "./presets.json";
 
 export const FIRST_YEAR = 1981;
 export const LAST_YEAR = new Date().getFullYear() - 1;
@@ -11,7 +13,8 @@ export const THEMES: Theme[] = [
   { id: "ice", name: "Snow and ice", description: "Accumulated snow, frost days and the cold that sustains them." },
   { id: "sun", name: "Sun and clouds", description: "How much sunlight reaches the ground, and what blocks it: clouds and particles." },
   { id: "wind", name: "Wind and pressure", description: "Air circulation near the surface." },
-  { id: "air", name: "Air composition", description: "Water vapor, suspended particles and the ozone layer." },
+  { id: "air", name: "Air composition", description: "Water vapor, suspended particles, pollutant gases and the ozone layer." },
+  { id: "life", name: "Plants and fire", description: "Vegetation, tree cover, plant growth and fires, seen by satellites (featured places only)." },
 ];
 
 export const themeById = (id: ThemeId): Theme => THEMES.find((t) => t.id === id) ?? THEMES[0];
@@ -40,48 +43,34 @@ export const VARIABLES: Variable[] = [
   { id: "TO3", name: "Total ozone", unit: "DU", themes: ["air"], increase: "blue", digits: 1, source: "MERRA-2", definition: "Amount of ozone in the whole air column, in Dobson units. It is the shield against ultraviolet radiation." },
 ];
 
-export const VARIABLE_BY_ID: Record<string, Variable> = Object.fromEntries(VARIABLES.map((v) => [v.id, v]));
+/** NASA POWER variables plus the extra records of the featured places (see extraVariables.ts). */
+export const ALL_VARIABLES: Variable[] = [...VARIABLES, ...EXTRA_VARIABLES];
+export const VARIABLE_BY_ID: Record<string, Variable> = Object.fromEntries(ALL_VARIABLES.map((v) => [v.id, v]));
+/** IDs requested from NASA POWER. */
 export const VARIABLE_IDS = VARIABLES.map((v) => v.id);
 
-export const PRESETS: Preset[] = [
-  { name: "Manaus", region: "Central Amazon", lat: -3.1, lon: -60.0, tag: "tropical rainforest" },
-  { name: "Pantanal", region: "Brazil", lat: -17.5, lon: -57.0, tag: "wetland" },
-  { name: "Petrolina", region: "Northeastern backlands", lat: -9.4, lon: -40.5, tag: "semi-arid" },
-  { name: "São Paulo", region: "Brazil", lat: -23.5, lon: -46.6, tag: "megacity" },
-  { name: "Niamey", region: "Sahel", lat: 13.5, lon: 2.1, tag: "desert edge" },
-  { name: "Tamanrasset", region: "Sahara", lat: 22.8, lon: 5.5, tag: "desert" },
-  { name: "Svalbard", region: "Arctic", lat: 78.2, lon: 15.6, tag: "polar" },
-  { name: "Yakutsk", region: "Siberia", lat: 62.0, lon: 129.7, tag: "permafrost" },
-  { name: "Alps", region: "Switzerland", lat: 46.5, lon: 9.8, tag: "snowy mountain" },
-  { name: "Delhi", region: "India", lat: 28.6, lon: 77.2, tag: "megacity" },
-  { name: "Beijing", region: "China", lat: 39.9, lon: 116.4, tag: "megacity" },
-  { name: "Ganges Delta", region: "Bangladesh", lat: 22.0, lon: 89.5, tag: "estuary" },
-  { name: "Aral Sea", region: "Central Asia", lat: 45.0, lon: 60.0, tag: "shrinking lake" },
-  { name: "Central Valley", region: "California", lat: 36.6, lon: -119.8, tag: "irrigated farmland" },
-  { name: "Murray-Darling", region: "Australia", lat: -34.0, lon: 145.0, tag: "semi-arid farmland" },
-  { name: "Equatorial Pacific", region: "El Niño region", lat: 0.0, lon: -150.0, tag: "ocean" },
-  { name: "Antarctic Peninsula", region: "Antarctica", lat: -64.8, lon: -62.9, tag: "polar" },
-];
+/** The featured places (shared with scripts/fetch-extras.mjs, which downloads their extra records). */
+export const PRESETS: Preset[] = presetList;
 
 /** “Detective’s nose”: variables that usually yield good clues for each type of place. */
 export const HINTS: Record<string, string[]> = {
-  polar: ["T2M", "T2M_MIN", "TS", "SNODP", "FROST_DAYS", "ALLSKY_SFC_LW_DWN"],
+  polar: ["T2M", "T2M_MIN", "TS", "SNODP", "FROST_DAYS", "ALLSKY_SFC_LW_DWN", "SNOW_COVER"],
   cold: ["T2M_MIN", "SNODP", "FROST_DAYS", "T2M", "TS"],
-  desert: ["T2M_MAX", "AOD_55", "PRECTOTCORR", "GWETTOP", "WS10M"],
-  "semi-arid": ["PRECTOTCORR", "GWETROOT", "GWETTOP", "EVLAND", "T2M_MAX"],
+  desert: ["T2M_MAX", "AOD_55", "PRECTOTCORR", "GWETTOP", "WS10M", "DUST", "LST_DAY"],
+  "semi-arid": ["PRECTOTCORR", "GWETROOT", "GWETTOP", "EVLAND", "T2M_MAX", "NDVI", "ET_MODIS"],
   "humid tropical": ["PRECTOTCORR", "GWETROOT", "EVLAND", "T2M_MAX", "CLOUD_AMT", "RH2M"],
   temperate: ["T2M", "PRECTOTCORR", "GWETROOT", "FROST_DAYS", "ALLSKY_SFC_SW_DWN"],
   ocean: ["TS", "WS10M", "TQV", "PRECTOTCORR", "CLOUD_AMT"],
-  megacity: ["AOD_55", "T2M_MIN", "ALLSKY_SFC_SW_DWN"],
-  estuary: ["PRECTOTCORR", "GWETROOT", "EVLAND", "WS10M"],
-  wetland: ["GWETROOT", "EVLAND", "PRECTOTCORR"],
-  "shrinking lake": ["T2M_MAX", "EVLAND", "GWETTOP", "AOD_55", "RH2M"],
-  "irrigated farmland": ["GWETROOT", "EVLAND", "PRECTOTCORR", "T2M_MAX"],
-  "semi-arid farmland": ["GWETROOT", "EVLAND", "PRECTOTCORR", "T2M_MAX"],
-  "snowy mountain": ["SNODP", "FROST_DAYS", "T2M_MIN"],
-  permafrost: ["TS", "T2M_MIN", "SNODP", "FROST_DAYS"],
-  "tropical rainforest": ["PRECTOTCORR", "GWETROOT", "EVLAND", "T2M_MAX"],
-  "desert edge": ["PRECTOTCORR", "GWETROOT", "AOD_55"],
+  megacity: ["AOD_55", "T2M_MIN", "ALLSKY_SFC_SW_DWN", "NO2", "PM25", "LST_NIGHT"],
+  estuary: ["PRECTOTCORR", "GWETROOT", "EVLAND", "WS10M", "RUNOFF"],
+  wetland: ["GWETROOT", "EVLAND", "PRECTOTCORR", "BURNED_AREA", "FIRE_FREQ", "NDVI"],
+  "shrinking lake": ["T2M_MAX", "EVLAND", "GWETTOP", "AOD_55", "RH2M", "DUST", "LST_DAY"],
+  "irrigated farmland": ["GWETROOT", "EVLAND", "PRECTOTCORR", "T2M_MAX", "NDVI", "ET_MODIS", "SOILM_DEEP"],
+  "semi-arid farmland": ["GWETROOT", "EVLAND", "PRECTOTCORR", "T2M_MAX", "NDVI", "SOILM_DEEP"],
+  "snowy mountain": ["SNODP", "FROST_DAYS", "T2M_MIN", "SNOW_COVER", "SWE"],
+  permafrost: ["TS", "T2M_MIN", "SNODP", "FROST_DAYS", "LST_DAY", "BURNED_AREA"],
+  "tropical rainforest": ["PRECTOTCORR", "GWETROOT", "EVLAND", "T2M_MAX", "TREE_COVER", "FIRE_FREQ", "LST_DAY"],
+  "desert edge": ["PRECTOTCORR", "GWETROOT", "AOD_55", "NDVI", "DUST"],
 };
 
 export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

@@ -18,6 +18,7 @@ import { GuidedTour } from "./components/tour/GuidedTour";
 import { ErrorMessage, Loading, Notice } from "./components/ui/Status";
 import { formatCoord } from "./lib/format";
 import { FIRST_YEAR, LAST_YEAR } from "./config/catalog";
+import { STORED_EXTRA_SOURCES } from "./lib/extras";
 import { useInvestigation } from "./state/InvestigationContext";
 
 /** One screen per step: home → place → clues → verdict → compare (plus the import screen, reached from home). */
@@ -121,6 +122,7 @@ export function App() {
         <SpaceAppsLogo />
         <span>
           Built for the NASA Space Apps Challenge · Data: NASA POWER (MERRA-2, CERES), {FIRST_YEAR}–{LAST_YEAR}
+          {STORED_EXTRA_SOURCES.length > 0 && <>; at the featured places also {STORED_EXTRA_SOURCES.join(", ")}</>}
         </span>
       </footer>
 

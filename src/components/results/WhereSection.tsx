@@ -4,6 +4,7 @@ import { RegionalTrendMap } from "../charts/RegionalTrendMap";
 import { WorldComparison } from "../charts/WorldComparison";
 import { SectionHeading } from "../ui/SectionHeading";
 import { SegmentedControl } from "../ui/SegmentedControl";
+import { Notice } from "../ui/Status";
 
 const TABS: { value: WhereTab; label: string }[] = [
   { value: "region", label: "Around here" },
@@ -34,7 +35,15 @@ export function WhereSection({ variable, onBack, onRestart }: Props) {
 
       {/* Both comparisons load as soon as the step opens, so switching tabs is instant. */}
       <div hidden={whereTab !== "region"}>
-        <RegionalTrendMap variable={variable} />
+        {variable.extra ? (
+          <Notice>
+            The map around the point needs the same record for every grid cell nearby, and {variable.name.toLowerCase()} is only stored for
+            the featured places (it comes from NASA {variable.extra.tool}, which cannot be queried from the browser).{" "}
+            <button type="button" className="link" onClick={() => actions.setWhereTab("world")}>Compare the featured places instead →</button>
+          </Notice>
+        ) : (
+          <RegionalTrendMap variable={variable} />
+        )}
       </div>
 
       <div hidden={whereTab !== "world"}>

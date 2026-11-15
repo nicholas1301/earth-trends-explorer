@@ -19,6 +19,7 @@ const PATHS: Record<ThemeId, ReactNode> = {
       <circle cx="17.5" cy="18" r="1.8" />
     </>
   ),
+  life: <path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14ZM5 19l8-8" />,
 };
 
 /** Line icon for an investigation topic, drawn in the current text colour. */

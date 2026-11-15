@@ -1,18 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { seasonById, THEMES, VARIABLES } from "../../config/catalog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ALL_VARIABLES, seasonById, THEMES } from "../../config/catalog";
 import { useSavedPlaces } from "../../hooks/useSavedPlaces";
 import { makePlace, samePlace } from "../../lib/places";
 import { useInvestigation } from "../../state/InvestigationContext";
-import type { Place } from "../../types";
+import type { Place, Variable } from "../../types";
 import { PlaceSearch } from "../setup/PlaceSearch";
 import { FiltersBar } from "./FiltersBar";
 import "../setup/PlacePicker.css";
 import "./SelectionBar.css";
 
 /** Variables grouped by their main topic, for the variable picker. */
-const VARIABLE_GROUPS = THEMES.map((t) => ({ theme: t, variables: VARIABLES.filter((v) => v.themes[0] === t.id) })).filter(
-  (g) => g.variables.length > 0,
-);
+const groupVariables = (variables: Variable[]) =>
+  THEMES.map((t) => ({ theme: t, variables: variables.filter((v) => v.themes[0] === t.id) })).filter((g) => g.variables.length > 0);
 
 interface Props {
   /** Show the variable picker (steps that depend on one variable). */
@@ -24,8 +23,9 @@ interface Props {
  * Wide screens show every control in one compact strip; narrow screens show a one-line summary that expands on demand.
  */
 export function SelectionBar({ showVariable }: Props) {
-  const { state, actions } = useInvestigation();
+  const { state, actions, analysis } = useInvestigation();
   const place = state.investigation?.place ?? state.place;
+  const groups = useMemo(() => groupVariables(analysis?.variables ?? ALL_VARIABLES), [analysis?.variables]);
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setEditing(false), []);
@@ -40,7 +40,7 @@ export function SelectionBar({ showVariable }: Props) {
   if (!place) return null;
 
   const { filters } = state;
-  const variable = showVariable ? VARIABLES.find((v) => v.id === state.variable) : undefined;
+  const variable = showVariable ? ALL_VARIABLES.find((v) => v.id === state.variable) : undefined;
   const summary = [variable?.name, `${filters.y0}–${filters.y1}`, seasonById(filters.season).name].filter(Boolean);
 
   return (
@@ -71,7 +71,7 @@ export function SelectionBar({ showVariable }: Props) {
           <label className="ctl ctl-variable">
             <span className="ctl-label">Variable</span>
             <select value={state.variable ?? ""} onChange={(e) => actions.selectVariable(e.target.value)}>
-              {VARIABLE_GROUPS.map(({ theme, variables }) => (
+              {groups.map(({ theme, variables }) => (
                 <optgroup key={theme.id} label={theme.name}>
                   {variables.map((v) => (
                     <option key={v.id} value={v.id}>{v.name}</option>

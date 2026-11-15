@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { THEMES, VARIABLES, themeById } from "../../config/catalog";
+import { PRESETS, THEMES, VARIABLES, themeById } from "../../config/catalog";
+import { STORED_EXTRA_SOURCES, STORED_EXTRA_VARIABLES, hasExtras, placesWithExtras } from "../../lib/extras";
 import { decreaseColor, increaseColor } from "../../lib/colors";
 import { formatNumber, formatPValue, formatSigned } from "../../lib/format";
 import { LEVEL_LABELS, SIGNIFICANT, isSignificant, perDecade, type TrendResult } from "../../lib/trend";
@@ -20,10 +21,12 @@ interface Props {
 export function ClueBoard({ analysis, onSelect, onBack }: Props) {
   const { state, actions } = useInvestigation();
   const [showAll, setShowAll] = useState(false);
-  const { scan, ranked, hints } = analysis;
+  const { scan, ranked, hints, variables } = analysis;
   const { topic } = state;
   const { place, profile } = state.investigation!;
-  const nSignificant = VARIABLES.filter((v) => isSignificant(scan[v.id])).length;
+  const nSignificant = variables.filter((v) => isSignificant(scan[v.id])).length;
+  const nExtra = variables.length - VARIABLES.length;
+  const themes = THEMES.filter((t) => t.id === topic || variables.some((v) => v.themes.includes(t.id)));
 
   const inTopic = topic ? ranked.filter((v) => v.themes.includes(topic)) : ranked;
   const notable = inTopic.filter((v) => isSignificant(scan[v.id]));
@@ -37,8 +40,9 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
     <section id="sec-clues">
       <SectionHeading title={`Trends in ${place.name}`} />
       <p className="lead">
-        We tested {VARIABLES.length} variables: <b className="hl">{nSignificant}</b> {nSignificant === 1 ? "shows" : "show"} a significant
-        trend. Pick one to see the evidence.
+        We tested {variables.length} variables
+        {nExtra > 0 && <> ({VARIABLES.length} from NASA POWER and {nExtra} satellite and model records stored for this featured place)</>}:{" "}
+        <b className="hl">{nSignificant}</b> {nSignificant === 1 ? "shows" : "show"} a significant trend. Pick one to see the evidence.
       </p>
       <p className="muted">
         This place: {place.tag ?? profile.kind} · {formatNumber(profile.meanTemp, 1)} °C on average · {formatNumber(profile.annualRain, 0)} mm
@@ -49,7 +53,7 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
         <button type="button" aria-pressed={topic === null} onClick={() => actions.setTopic(null)}>
           All topics
         </button>
-        {THEMES.map((t) => (
+        {themes.map((t) => (
           <button key={t.id} type="button" aria-pressed={topic === t.id} title={t.description} onClick={() => actions.setTopic(t.id)}>
             <ThemeIcon theme={t.id} size={16} />
             {t.name}
@@ -69,6 +73,7 @@ export function ClueBoard({ analysis, onSelect, onBack }: Props) {
           {showAll ? "Show only significant trends" : `Show the other ${hidden} variable${hidden > 1? 's' : ''}`}
         </button>
       )}
+      {nExtra === 0 && <ExtrasNotice featured={hasExtras(place.lat, place.lon)} onPickPlace={onBack} />}
       <div className="step-nav" style={{ marginTop: 24 }}>
         <button type="button" onClick={onBack}>← Place</button>
       </div>
@@ -92,6 +97,11 @@ function ClueRow({ variable: v, result: r, selected, typical, onSelect }: RowPro
         <span className="clue-name">
           {v.name}
           {typical && <span className="tag" title="Usually a good clue in places of this type">typical here</span>}
+          {v.extra && (
+            <span className="tag" title={`${v.source}, downloaded from NASA ${v.extra.tool} for the featured places`}>
+              since {v.extra.since}
+            </span>
+          )}
         </span>
         <span className="clue-def">{v.definition}</span>
       </span>
@@ -118,5 +128,31 @@ function Verdict({ result: r, variable: v }: { result: TrendResult; variable: Va
         {formatSigned(perDecade(r), v.digits)} {v.unit} per decade
       </small>
     </span>
+  );
+}
+
+/** "Dust near the ground" → "dust near the ground", but "UV index" stays as it is. */
+const lowerFirst = (s: string) => (/^[A-Z][A-Z]/.test(s) ? s : s[0].toLowerCase() + s.slice(1));
+
+/**
+ * Explains why the extra records (vegetation, fire, pollution…) are missing: they are only stored for the featured
+ * places, because the tools they come from need a NASA login and cannot be queried from the browser.
+ */
+function ExtrasNotice({ featured, onPickPlace }: { featured: boolean; onPickPlace(): void }) {
+  const available = placesWithExtras();
+  if (featured || !available.length) return null;
+  const names = STORED_EXTRA_VARIABLES.map((v) => lowerFirst(v.name.replace(/ \(.*\)$/, "")));
+  const examples = names.length > 4 ? `${names.slice(0, 4).join(", ")}…` : names.join(", ");
+  const toolList = [...new Set(STORED_EXTRA_VARIABLES.map((v) => v.extra!.tool))];
+  const tools = toolList.join(" and ");
+  return (
+    <aside className="extras-notice">
+      <b>{STORED_EXTRA_VARIABLES.length} more variables are available at the featured places only.</b> Records such as {examples} come
+      from {STORED_EXTRA_SOURCES.join(", ")} through NASA {tools}, which {toolList.length > 1 ? "need" : "needs"} a NASA login and cannot be queried from your browser. We
+      downloaded them in advance
+      for {available.length === PRESETS.length ? "the " : ""}{available.length} featured place{available.length === 1 ? "" : "s"}:{" "}
+      {available.map((p) => p.name).join(", ")}.{" "}
+      <button type="button" className="link" onClick={onPickPlace}>Pick one of them →</button>
+    </aside>
   );
 }

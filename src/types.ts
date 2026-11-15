@@ -1,7 +1,7 @@
 /** Monthly values indexed as grid[yearIndex][monthIndex]; null = missing. yearIndex 0 is FIRST_YEAR unless an origin is given. */
 export type MonthlyGrid = Array<Array<number | null> | undefined>;
 
-export type ThemeId = "heat" | "water" | "ice" | "sun" | "wind" | "air";
+export type ThemeId = "heat" | "water" | "ice" | "sun" | "wind" | "air" | "life";
 
 /** Which colour an *increase* of the variable gets: red = warming/drying, blue = more water/cold. */
 export type IncreaseColor = "red" | "blue";
@@ -22,6 +22,16 @@ export interface Variable {
   digits: number;
   source: string;
   definition: string;
+  /** Set for records that are not from NASA POWER: downloaded in advance, only for the featured places. */
+  extra?: {
+    /** NASA tool the record was downloaded from. */
+    tool: "AppEEARS" | "Giovanni";
+    product: string;
+    /** First year of the record. */
+    since: number;
+    /** What area the value represents. */
+    scope: string;
+  };
 }
 
 export interface Preset {

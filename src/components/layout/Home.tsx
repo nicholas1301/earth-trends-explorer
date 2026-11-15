@@ -1,4 +1,5 @@
 import { FIRST_YEAR, LAST_YEAR, VARIABLES } from "../../config/catalog";
+import { STORED_EXTRA_VARIABLES } from "../../lib/extras";
 import { CHALLENGES } from "../../config/challenges";
 import { DEMOS } from "../../config/demos";
 import { useChallengeProgress } from "../../hooks/useChallengeProgress";
@@ -30,7 +31,7 @@ export function Home({ onStart, onStartDemo, onStartChallenge, onImport }: Props
         </h2>
         <p className="lead">
           Pick a place. We check {LAST_YEAR - FIRST_YEAR + 1} years of NASA data, test {VARIABLES.length} variables
-          and tell you in plain words what is really changing.
+          {STORED_EXTRA_VARIABLES.length > 0 && <>(up to {VARIABLES.length + STORED_EXTRA_VARIABLES.length} at the featured places) </>}and tell you in plain words what is really changing.
         </p>
         <button type="button" className="primary big" onClick={onStart}>
           Start investigating →

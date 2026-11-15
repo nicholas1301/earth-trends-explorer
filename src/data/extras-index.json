@@ -1,0 +1,165 @@
+{
+  "generated": "2026-11-15",
+  "places": {
+    "-3.1_-60": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "-17.5_-57": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "-9.4_-40.5": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "-23.5_-46.6": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "13.5_2.1": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "22.8_5.5": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "78.2_15.6": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "62_129.7": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "46.5_9.8": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "28.6_77.2": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "39.9_116.4": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "22_89.5": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "45_60": [
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "36.6_-119.8": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "-34_145": [
+      "RUNOFF",
+      "SOILM_DEEP",
+      "SWE",
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "0_-150": [
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ],
+    "-64.8_-62.9": [
+      "NO2",
+      "SO2",
+      "UV_INDEX",
+      "OLR",
+      "CLOUD_TOP_T"
+    ]
+  }
+}

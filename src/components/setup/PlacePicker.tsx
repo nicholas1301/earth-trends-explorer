@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { storedIds } from "../../lib/extras";
 import { formatCoord } from "../../lib/format";
 import { isLand } from "../../lib/geo";
 import type { LatLon } from "../../lib/mapView";
@@ -166,6 +167,11 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
                   {place.region && `${place.region} · `}
                   {description}
                 </div>
+                {storedIds(place.lat, place.lon).length > 0 && (
+                  <div className="muted place-extras">
+                    Featured place: {storedIds(place.lat, place.lon).length} more records from other NASA tools are stored for it
+                  </div>
+                )}
               </>
             ) : (
               <div className="muted">No place chosen yet: search, click the globe or pick a saved place.</div>

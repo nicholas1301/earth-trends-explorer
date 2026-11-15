@@ -9,7 +9,10 @@ when the change happens.
 
 To go beyond NASA POWER, each variable links to NASA **Giovanni** pre-filled for the same place and period (MODIS, OMI,
 AIRS, GPM IMERG, GLDAS…), and any time series exported from Giovanni, AppEEARS, KNMI Climate Explorer or NOAA Climate
-Data Online can be dropped into the app to run the same tests. See [docs/resources-assessment.md](docs/resources-assessment.md)
+Data Online can be dropped into the app to run the same tests. At the 17 featured places, records that NASA POWER does
+not have are stored in the repository and tested like the others. Stored so far: OMI NO₂, SO₂ and UV index; AIRS
+outgoing long-wave radiation and cloud-top temperature; GLDAS runoff, deep soil water and snow water
+(`src/data/extras-index.json` lists them per place). See [docs/resources-assessment.md](docs/resources-assessment.md)
 for how each recommended resource was evaluated.
 
 **Live app:** https://nicholas1301.github.io/earth-trends-explorer/
@@ -24,6 +27,21 @@ npm run dev      # dev server at http://localhost:5173
 npm test         # unit tests (Vitest)
 npm run build    # typecheck + production build into dist/
 ```
+
+### Updating the featured places' extra records
+
+The records in `src/data/extras/` are downloaded once by a script, because NASA AppEEARS and Giovanni need a login
+and cannot be queried from the browser. It needs a free [NASA Earthdata](https://urs.earthdata.nasa.gov) account,
+read from `EARTHDATA_USERNAME` / `EARTHDATA_PASSWORD` or from `~/.netrc`
+(`machine urs.earthdata.nasa.gov login <user> password <password>`):
+
+```bash
+node scripts/fetch-extras.mjs              # Giovanni series + AppEEARS tasks; re-run to resume while AppEEARS works
+node scripts/fetch-extras.mjs --build      # rebuild the JSON files from the download cache only
+```
+
+What is downloaded, and how it is converted, is in `scripts/extras/datasets.json`; the labels the app shows are in
+`src/config/extraVariables.ts`. Downloads are cached in `scripts/extras/.cache/` (git-ignored).
 
 Pushing to `main` deploys to GitHub Pages via `.github/workflows/pages.yml`
 (enable *Settings → Pages → Source: GitHub Actions* once).
@@ -76,4 +94,8 @@ period or season never refetches.
 - User-imported files from [NASA Giovanni](https://giovanni.gsfc.nasa.gov/giovanni/),
   [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/), [KNMI Climate Explorer](https://climexp.knmi.nl/) and
   [NOAA Climate Data Online](https://www.ncei.noaa.gov/cdo-web/) (read in the browser, never uploaded)
+- Featured places only, stored in `src/data/extras/`: OMI (OMNO2d, OMSO2e, OMUVBd), AIRS (AIRS3STM) and GLDAS Noah 2.1
+  monthly series via the [NASA Giovanni](https://giovanni.gsfc.nasa.gov/giovanni/) time-series API. The download
+  script also covers MERRA-2 aerosols and MODIS land products via [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/),
+  added as their downloads complete
 - Coastlines: [Natural Earth](https://www.naturalearthdata.com) 1:110m, via the `world-atlas` package (public domain)

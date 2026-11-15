@@ -1,6 +1,6 @@
 import { FIRST_YEAR, LAST_YEAR, MIN_SPAN } from "../config/catalog";
 import type { PlaceProfile } from "../lib/geo";
-import type { ChartView, Filters, Place, PointData, Step, ThemeId, WhereTab } from "../types";
+import type { ChartView, Filters, Place, PointData, Step, ThemeId, Variable, WhereTab } from "../types";
 
 /** A completed data download for one place. */
 export interface Investigation {
@@ -8,6 +8,10 @@ export interface Investigation {
   place: Place;
   data: PointData;
   profile: PlaceProfile;
+  /** Variables tested here: the NASA POWER ones, plus the stored extra records at a featured place. */
+  variables: Variable[];
+  /** Exact dataset of each extra record. */
+  extraSources: Record<string, string>;
 }
 
 export interface State {

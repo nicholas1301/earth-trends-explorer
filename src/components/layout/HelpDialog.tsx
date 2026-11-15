@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { STORED_EXTRA_VARIABLES } from "../../lib/extras";
 import { FURTHER_READING } from "../../config/externalSources";
 import "./HelpDialog.css";
 
@@ -21,6 +22,8 @@ const TERMS: Array<{ term: string; definition: ReactNode }> = [
   { term: "Record length", definition: "Short records rarely give significant trends: year-to-year noise hides a slow change. A mission launched a few years ago (for example SWOT, 2022) cannot show a trend yet, while 40 years of reanalysis or station data often can." },
   { term: "Reanalysis (MERRA-2)", definition: "A NASA global model that combines millions of satellite and station observations to reconstruct the state of the atmosphere and surface, in cells of about 50 km." },
 ];
+
+const tools = STORED_EXTRA_VARIABLES.map((v) => v.extra!.tool);
 
 /** Glossary, sources and limitations — kept out of the main flow and opened on demand. */
 export function HelpDialog({ open, onClose }: { open: boolean; onClose(): void }) {
@@ -66,6 +69,15 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose(): void }
             fewer than 75% of the months are discarded. The “Dec–Feb” season uses the three months of the same calendar year. Reanalyses may
             contain artificial jumps when new satellites enter the system; treat a result as a clue to confirm with other sources, not as final
             proof. The analysis only detects linear/monotonic trends. “Significant” does not mean “important” and does not identify the cause.
+            {STORED_EXTRA_VARIABLES.length > 0 && (
+              <>
+                At the featured places, {STORED_EXTRA_VARIABLES.length} more records are stored in the app, downloaded in advance because
+                their tools need a NASA login: {STORED_EXTRA_VARIABLES.map((v) => `${v.name} (${v.source})`).join(", ")}.
+                {tools.includes("AppEEARS") && " Records from NASA AppEEARS are the mean of points within about 1 km of the place (22 km for fire)."}
+                {tools.includes("Giovanni") && " Records from NASA Giovanni are the value of the grid cell containing the place."} Most start
+                around 2000, so their trends cover a shorter period.{" "}
+              </>
+            )}
             Coastlines: Natural Earth (public domain). Imported files are averaged per calendar month and analysed with the same methods;
             their quality and units are those of the original tool.
           </p>
