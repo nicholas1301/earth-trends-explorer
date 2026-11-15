@@ -32,6 +32,8 @@ export function SelectionBar({ showVariable }: Props) {
     void actions.investigate({ place: p, variable: state.variable });
   };
 
+  if (!place) return null;
+
   return (
     <div className="selection-bar" id="selection">
       <div className="selection-row">

@@ -16,6 +16,8 @@ export interface ChallengeView {
 export interface Task {
   label: string;
   done(view: ChallengeView): boolean;
+  /** Place the task asks for; the card offers a shortcut to it, since it may not be in the user's saved places. */
+  place?: Place;
 }
 
 export interface Quiz {

@@ -3,6 +3,7 @@ import { useChallengeProgress } from "../../hooks/useChallengeProgress";
 import { LEVEL_NAMES, evaluateChallenge, type Challenge, type ChallengeView } from "../../lib/challenges";
 import { formatSigned } from "../../lib/format";
 import { useInvestigation } from "../../state/InvestigationContext";
+import type { Place } from "../../types";
 import "./ChallengeCard.css";
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
  * regular tool, and the card ticks the tasks, asks the question and checks the answer against the data on screen.
  */
 export function ChallengeCard({ challenge, onClose, onNext }: Props) {
-  const { state, analysis } = useInvestigation();
+  const { state, actions, analysis } = useInvestigation();
   const { progress, complete, recordScore } = useChallengeProgress();
   const [collapsed, setCollapsed] = useState(false);
   const [showHint, setShowHint] = useState(false);
@@ -59,6 +60,12 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
     }
   };
 
+  // Shortcut to a place the challenge asks for, which may not be among the user's saved places.
+  const goToPlace = (place: Place) => {
+    actions.setPlace(place);
+    if (state.step !== "place") void actions.investigate({ place, variable });
+  };
+
   const best = progress.best[challenge.id];
   const doneCount = status.tasks.filter(Boolean).length;
   const label = `Challenge · ${LEVEL_NAMES[challenge.level]}`;
@@ -87,6 +94,11 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
           <li key={t.label} className={status.tasks[i] ? "done" : undefined}>
             <span aria-hidden="true">{status.tasks[i] ? "✓" : "○"}</span>
             {t.label}
+            {t.place && !status.tasks[i] && (
+              <button type="button" className="link challenge-go" onClick={() => goToPlace(t.place!)}>
+                {state.step === "place" ? "Choose it" : "Go there"}
+              </button>
+            )}
           </li>
         ))}
       </ul>

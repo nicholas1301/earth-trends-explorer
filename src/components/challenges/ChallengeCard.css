@@ -39,7 +39,8 @@
 .challenge-title { font-family: var(--font-display); font-weight: 400; font-size: 22px; line-height: 1.05; letter-spacing: .02em; text-transform: uppercase; }
 
 .challenge-tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; color: var(--muted); }
-.challenge-tasks li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.challenge-tasks li { display: grid; grid-template-columns: 16px 1fr auto; gap: 6px; }
+.challenge-go { font-size: inherit; white-space: nowrap; }
 .challenge-tasks li.done { color: var(--text); }
 .challenge-tasks li.done span { color: var(--red); font-weight: 700; }
 

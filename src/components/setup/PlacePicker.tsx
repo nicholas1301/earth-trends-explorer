@@ -30,22 +30,23 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
   const pickedOnMap = useRef(false);
   const [flyTo, setFlyTo] = useState<(LatLon & { key: number }) | null>(null);
   useEffect(() => {
+    if (!place) return;
     if (pickedOnMap.current) pickedOnMap.current = false;
     else setFlyTo((f) => ({ lat: place.lat, lon: place.lon, key: (f?.key ?? 0) + 1 }));
-  }, [place.lat, place.lon]);
+  }, [place?.lat, place?.lon]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lookingUp = usePlaceName(place, actions.setPlace);
   const saved = useSavedPlaces();
   const [editing, setEditing] = useState(false);
   const [coordsOpen, setCoordsOpen] = useState(false);
-  const isSaved = saved.has(place);
+  const isSaved = !!place && saved.has(place);
 
   const choose = useCallback((p: Place) => actions.setPlace(p), [actions]);
   const geo = useGeolocation(useCallback((lat, lon) => choose(makePlace(lat, lon, undefined, MY_LOCATION)), [choose]));
 
   // Any other choice clears the location message.
   useEffect(() => {
-    if (place.name !== MY_LOCATION) geo.reset();
+    if (place?.name !== MY_LOCATION) geo.reset();
   }, [place, geo.reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const markers = useMemo<MapMarker[]>(
@@ -61,17 +62,21 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
           </circle>
         ),
       })),
-      {
-        key: "selected",
-        lat: place.lat,
-        lon: place.lon,
-        content: (
-          <g pointerEvents="none">
-            <circle r={11} fill="none" stroke="var(--red)" strokeWidth={2.5} />
-            <circle r={3.5} fill="var(--red)" />
-          </g>
-        ),
-      },
+      ...(place
+        ? [
+            {
+              key: "selected",
+              lat: place.lat,
+              lon: place.lon,
+              content: (
+                <g pointerEvents="none">
+                  <circle r={11} fill="none" stroke="var(--red)" strokeWidth={2.5} />
+                  <circle r={3.5} fill="var(--red)" />
+                </g>
+              ),
+            },
+          ]
+        : []),
     ],
     [place, choose, saved.places],
   );
@@ -80,7 +85,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
     if (await actions.investigate()) onInvestigated();
   };
 
-  const description = formatCoord(place.lat, place.lon) + " · " + (place.tag ?? (isLand(place.lat, place.lon) ? "land" : "ocean"));
+  const description = place && formatCoord(place.lat, place.lon) + " · " + (place.tag ?? (isLand(place.lat, place.lon) ? "land" : "ocean"));
 
   return (
     <section id="q-place">
@@ -93,7 +98,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
           initialMode="globe"
           markers={markers}
           flyTo={flyTo}
-          home={place}
+          home={place ?? undefined}
           onPick={(g) => {
             pickedOnMap.current = true;
             choose(makePlace(g.lat, g.lon));
@@ -121,7 +126,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
             </div>
             {coordsOpen && (
               <div id="place-coords" className="row place-coords">
-                <CoordinateInputs lat={place.lat} lon={place.lon} onChange={(lat, lon) => choose(makePlace(lat, lon))} />
+                <CoordinateInputs lat={place?.lat} lon={place?.lon} onChange={(lat, lon) => choose(makePlace(lat, lon))} />
               </div>
             )}
             <GeolocationMessage status={geo.status} onRetry={geo.locate} />
@@ -130,24 +135,32 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
           <div className="place-now">
             <div className="place-now-head">
               <h3>Selected place</h3>
-              <button
-                type="button"
-                className="save-toggle"
-                aria-pressed={isSaved}
-                disabled={!isSaved && (saved.isFull || lookingUp)}
-                title={isSaved ? "Remove from saved places" : saved.isFull ? "Your list is full — remove a place first" : "Add to saved places"}
-                onClick={() => (isSaved ? saved.remove(place) : saved.add(place))}
-              >
-                <span aria-hidden="true">{isSaved ? "★" : "☆"}</span>
-                {isSaved ? "Saved" : "Save"}
-              </button>
+              {place && (
+                <button
+                  type="button"
+                  className="save-toggle"
+                  aria-pressed={isSaved}
+                  disabled={!isSaved && (saved.isFull || lookingUp)}
+                  title={isSaved ? "Remove from saved places" : saved.isFull ? "Your list is full — remove a place first" : "Add to saved places"}
+                  onClick={() => (isSaved ? saved.remove(place) : saved.add(place))}
+                >
+                  <span aria-hidden="true">{isSaved ? "★" : "☆"}</span>
+                  {isSaved ? "Saved" : "Save"}
+                </button>
+              )}
             </div>
-            <b>{lookingUp ? <span className="place-lookup">Finding place name…</span> : place.name}</b>
-            <div className="muted">
-              {place.region && `${place.region} · `}
-              {description}
-            </div>
-            <button type="button" className="primary big" disabled={state.loading} onClick={investigate}>
+            {place ? (
+              <>
+                <b>{lookingUp ? <span className="place-lookup">Finding place name…</span> : place.name}</b>
+                <div className="muted">
+                  {place.region && `${place.region} · `}
+                  {description}
+                </div>
+              </>
+            ) : (
+              <div className="muted">No place chosen yet: search, click the globe or pick a saved place.</div>
+            )}
+            <button type="button" className="primary big" disabled={state.loading || !place} onClick={investigate}>
               {state.loading ? "Fetching NASA data…" : "Investigate this place →"}
             </button>
           </div>
@@ -174,7 +187,7 @@ export function PlacePicker({ onInvestigated, onBack }: Props) {
                       type="button"
                       className="chip"
                       title={[p.region, p.tag].filter(Boolean).join(" · ")}
-                      aria-pressed={samePlace(p, place)}
+                      aria-pressed={!!place && samePlace(p, place)}
                       onClick={() => choose(p)}
                     >
                       {p.name}
@@ -211,16 +224,16 @@ const LOOKUP_DELAY_MS = 400; // debounce: Nominatim allows at most one request p
  * Names points chosen on the map, by coordinates or by geolocation with their city/state
  * (reverse geocoding). Returns true while the lookup is pending.
  */
-function usePlaceName(place: Place, setPlace: (p: Place) => void): boolean {
+function usePlaceName(place: Place | null, setPlace: (p: Place) => void): boolean {
   const [lookingUp, setLookingUp] = useState(false);
   const latest = useRef(place);
   latest.current = place;
 
-  const isMine = place.name === MY_LOCATION;
-  const unnamed = !place.tag && !place.region && (place.name === DEFAULT_PLACE_LABEL || isMine);
+  const isMine = place?.name === MY_LOCATION;
+  const unnamed = !!place && !place.tag && !place.region && (place.name === DEFAULT_PLACE_LABEL || isMine);
 
   useEffect(() => {
-    if (!unnamed) return;
+    if (!place || !unnamed) return;
     const asked = { lat: place.lat, lon: place.lon, name: place.name };
     const ctrl = new AbortController();
     setLookingUp(!isMine);
@@ -228,7 +241,7 @@ function usePlaceName(place: Place, setPlace: (p: Place) => void): boolean {
       reverseGeocode(asked.lat, asked.lon, ctrl.signal)
         .then((r) => {
           const cur = latest.current;
-          if (!r || !samePlace(cur, asked) || cur.name !== asked.name) return;
+          if (!r || !cur || !samePlace(cur, asked) || cur.name !== asked.name) return;
           // Keep “Your location” as the title and put the city in the subtitle.
           setPlace(isMine ? { ...cur, region: [r.name, r.region].filter(Boolean).join(", ") } : { ...cur, name: r.name, region: r.region });
         })
@@ -242,7 +255,7 @@ function usePlaceName(place: Place, setPlace: (p: Place) => void): boolean {
       ctrl.abort();
       setLookingUp(false);
     };
-  }, [unnamed, isMine, place.lat, place.lon, setPlace]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [unnamed, isMine, place?.lat, place?.lon, setPlace]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return lookingUp;
 }
@@ -266,9 +279,9 @@ function GeolocationMessage({ status, onRetry }: { status: ReturnType<typeof use
 }
 
 /** Lat/lon inputs that commit on change (blur/enter), like the original form. */
-function CoordinateInputs({ lat, lon, onChange }: { lat: number; lon: number; onChange(lat: number, lon: number): void }) {
-  const [draft, setDraft] = useState({ lat: String(lat), lon: String(lon) });
-  useEffect(() => setDraft({ lat: String(lat), lon: String(lon) }), [lat, lon]);
+function CoordinateInputs({ lat, lon, onChange }: { lat?: number; lon?: number; onChange(lat: number, lon: number): void }) {
+  const [draft, setDraft] = useState({ lat: String(lat ?? ""), lon: String(lon ?? "") });
+  useEffect(() => setDraft({ lat: String(lat ?? ""), lon: String(lon ?? "") }), [lat, lon]);
 
   const commit = () => {
     const la = parseFloat(draft.lat);

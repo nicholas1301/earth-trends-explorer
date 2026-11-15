@@ -69,7 +69,7 @@ export function App() {
 
         {(isResult || step === "place") && state.loading && (
           <Loading>
-            Fetching {LAST_YEAR - FIRST_YEAR + 1} years of NASA data for {state.place.name} ({formatCoord(state.place.lat, state.place.lon)})…
+            Fetching {LAST_YEAR - FIRST_YEAR + 1} years of NASA data{state.place && <> for {state.place.name} ({formatCoord(state.place.lat, state.place.lon)})</>}…
           </Loading>
         )}
         {(isResult || step === "place") && state.error && (

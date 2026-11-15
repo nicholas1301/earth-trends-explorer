@@ -1,8 +1,9 @@
 import type { Challenge, ChallengeView, Task } from "../lib/challenges";
 import { formatNumber, formatSigned } from "../lib/format";
-import { placeFromPreset, samePlace } from "../lib/places";
+import { distanceKm, placeFromPreset } from "../lib/places";
 import { LEVEL_LABELS, analyzeTrend, isSignificant, perDecade, type TrendOk, type TrendResult } from "../lib/trend";
-import { FIRST_YEAR, LAST_YEAR, MONTHS, PRESETS, VARIABLE_BY_ID, presetAt, seasonById } from "./catalog";
+import type { Place, Preset } from "../types";
+import { FIRST_YEAR, LAST_YEAR, MONTHS, VARIABLE_BY_ID, presetAt, seasonById } from "./catalog";
 
 /** Rate (°C per decade) that counts as “fast warming” in the record hunt. */
 export const FAST_WARMING = 0.5;
@@ -13,9 +14,34 @@ const FULL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June"
 
 // ---- Building blocks ----
 
-const investigate = (presetName: string): Task => {
-  const place = placeFromPreset(PRESETS.find((p) => p.name === presetName)!);
-  return { label: `Investigate ${presetName}`, done: (v) => samePlace(v.place, place) };
+/**
+ * Places the challenges ask for. They live here, not in the saved places, so every challenge keeps working
+ * when the user edits or empties that list.
+ */
+const PLACES = {
+  svalbard: { name: "Svalbard", region: "Arctic", lat: 78.2, lon: 15.6, tag: "polar" },
+  aral: { name: "Aral Sea", region: "Central Asia", lat: 45.0, lon: 60.0, tag: "shrinking lake" },
+  saoPaulo: { name: "São Paulo", region: "Brazil", lat: -23.5, lon: -46.6, tag: "megacity" },
+  niamey: { name: "Niamey", region: "Sahel", lat: 13.5, lon: 2.1, tag: "desert edge" },
+} satisfies Record<string, Preset>;
+
+/** A point this close (km) counts as the place, however it was chosen (search, globe, coordinates or saved list). */
+export const NEAR_KM = 150;
+/** A point named after the place (e.g. a search result or a reverse-geocoded click) may be this far away. */
+const NAMED_KM = 400;
+
+/** Lower case without accents, so “Sao Paulo” matches “São Paulo”. */
+const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+/** True when the investigated place is the one a challenge asks for. */
+export function isPlace(target: Place, place: Place): boolean {
+  const d = distanceKm(target, place);
+  return d <= NEAR_KM || (d <= NAMED_KM && fold(`${place.name} ${place.region}`).includes(fold(target.name)));
+}
+
+const investigate = (preset: Preset): Task => {
+  const place = placeFromPreset(preset);
+  return { label: `Investigate ${preset.name}`, done: (v) => isPlace(place, v.place), place };
 };
 
 const open = (variableId: string): Task => ({
@@ -39,7 +65,7 @@ export const CHALLENGES: Challenge[] = [
     theme: "heat",
     title: "How fast is the Arctic warming?",
     summary: "Read a verdict: find the rate of change in Svalbard.",
-    tasks: [investigate("Svalbard"), open("T2M")],
+    tasks: [investigate(PLACES.svalbard), open("T2M")],
     hint: "Choose Svalbard on the Place step, then pick “Air temperature” on the clue board. The verdict states the change per decade.",
     quiz(v) {
       const r = ok(v.scan.T2M);
@@ -61,7 +87,7 @@ export const CHALLENGES: Challenge[] = [
     theme: "water",
     title: "The strongest clue at the Aral Sea",
     summary: "Use the clue board: which of the 20 variables changed most clearly?",
-    tasks: [investigate("Aral Sea")],
+    tasks: [investigate(PLACES.aral)],
     hint: "The clue board lists all 20 variables with the strongest evidence first. Make sure the topic filter shows all topics.",
     quiz(v) {
       const top = v.ranked[0];
@@ -83,7 +109,7 @@ export const CHALLENGES: Challenge[] = [
     theme: "heat",
     title: "Hot days or warm nights in São Paulo?",
     summary: "Compare two variables in the same place.",
-    tasks: [investigate("São Paulo")],
+    tasks: [investigate(PLACES.saoPaulo)],
     hint: "Open “Maximum temperature” and “Minimum temperature” one after the other and compare the change per decade in each verdict.",
     quiz(v) {
       const max = ok(v.scan.T2M_MAX);
@@ -105,7 +131,7 @@ export const CHALLENGES: Challenge[] = [
     theme: "ice",
     title: "The month that changed the most",
     summary: "Look inside the year: when is Svalbard warming fastest?",
-    tasks: [investigate("Svalbard"), open("T2M")],
+    tasks: [investigate(PLACES.svalbard), open("T2M")],
     hint: "Below the main chart of the verdict, the “trend by month” bars show the change of each calendar month. Look for the tallest bar.",
     quiz(v) {
       const rates = MONTHS.map((_, m) => ok(analyzeTrend(v.data.T2M ?? [], v.filters.y0, v.filters.y1, [m])));
@@ -136,7 +162,7 @@ export const CHALLENGES: Challenge[] = [
     title: "Was the Sahel’s rain already back in 2000?",
     summary: "Change the period: how many years does a trend need to show up?",
     tasks: [
-      investigate("Niamey"),
+      investigate(PLACES.niamey),
       open("PRECTOTCORR"),
       { label: `Set the period to end in ${EARLY_END} or earlier`, done: (v) => v.filters.y1 <= EARLY_END },
     ],

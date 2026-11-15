@@ -1,6 +1,5 @@
-import { FIRST_YEAR, LAST_YEAR, MIN_SPAN, PRESETS } from "../config/catalog";
+import { FIRST_YEAR, LAST_YEAR, MIN_SPAN } from "../config/catalog";
 import type { PlaceProfile } from "../lib/geo";
-import { placeFromPreset } from "../lib/places";
 import type { ChartView, Filters, Place, PointData, Step, ThemeId, WhereTab } from "../types";
 
 /** A completed data download for one place. */
@@ -16,8 +15,8 @@ export interface State {
   step: Step;
   /** Topic filter on the clue board; null = all topics. */
   topic: ThemeId | null;
-  /** Place currently chosen in the picker (may differ from the investigated one). */
-  place: Place;
+  /** Place currently chosen in the picker (may differ from the investigated one); null until the user picks one. */
+  place: Place | null;
   filters: Filters;
   view: ChartView;
   whereTab: WhereTab;
@@ -30,7 +29,7 @@ export interface State {
 export const initialState: State = {
   step: "home",
   topic: null,
-  place: placeFromPreset(PRESETS[0]),
+  place: null,
   filters: { y0: FIRST_YEAR, y1: LAST_YEAR, season: "year" },
   view: "annual",
   whereTab: "region",

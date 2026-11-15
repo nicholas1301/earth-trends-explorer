@@ -138,3 +138,31 @@ describe("progress", () => {
     expect(scored.best.a).toBe(0.9);
   });
 });
+
+describe("challenge places", () => {
+  const c = byId("arctic-rate");
+  const at = (lat: number, lon: number, name = "Selected point", region = "") => ({ ...makeView("Svalbard", "T2M", {}), place: { lat, lon, name, region, tag: null } });
+
+  it("counts any nearby point, however it was chosen", () => {
+    expect(evaluateChallenge(c, at(78.2, 15.7, "Longyearbyen", "Svalbard, Norway")).ready).toBe(true);
+    expect(evaluateChallenge(c, at(78.9, 12.0)).ready).toBe(true);
+  });
+
+  it("counts a farther point named after the place", () => {
+    expect(evaluateChallenge(c, at(79.8, 22.0)).ready).toBe(false);
+    expect(evaluateChallenge(c, at(79.8, 22.0, "Nordaustlandet", "Svalbard, Norway")).ready).toBe(true);
+  });
+
+  it("does not count other places", () => {
+    expect(evaluateChallenge(c, at(69.6, 18.9, "Tromsø", "Norway")).ready).toBe(false);
+  });
+
+  it("matches names without accents", () => {
+    const sp = byId("day-or-night");
+    expect(evaluateChallenge(sp, { ...at(-22.0, -48.5, "Sao Paulo", "Brazil") }).ready).toBe(true);
+  });
+
+  it("offers a shortcut to every place it asks for", () => {
+    for (const ch of CHALLENGES) for (const t of ch.tasks) if (t.label.startsWith("Investigate")) expect(t.place).toBeTruthy();
+  });
+});

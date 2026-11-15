@@ -68,6 +68,7 @@ export function InvestigationProvider({ children }: { children: ReactNode }) {
       lastRequest.current = options;
       const id = ++requestId.current;
       const place = options.place ?? stateRef.current.place;
+      if (!place) return false;
       dispatch({ type: "investigationStarted" });
       try {
         const data = await fetchPoint(place.lat, place.lon, VARIABLE_IDS);
