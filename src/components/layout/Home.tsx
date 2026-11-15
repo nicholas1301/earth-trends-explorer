@@ -30,7 +30,7 @@ export function Home({ onStart, onStartDemo, onStartChallenge, onImport }: Props
           on our planet?
         </h2>
         <p className="lead">
-          Pick a place. We check {LAST_YEAR - FIRST_YEAR + 1} years of NASA data, test {VARIABLES.length} variables
+          Pick a place. We check {LAST_YEAR - FIRST_YEAR + 1} years of NASA data, test {VARIABLES.length} variables{" "}
           {STORED_EXTRA_VARIABLES.length > 0 && <>(up to {VARIABLES.length + STORED_EXTRA_VARIABLES.length} at the featured places) </>}and tell you in plain words what is really changing.
         </p>
         <button type="button" className="primary big" onClick={onStart}>
