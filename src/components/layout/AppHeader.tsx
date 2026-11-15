@@ -1,5 +1,4 @@
 import { useColorScheme } from "../../hooks/useColorScheme";
-import { SpaceAppsLogo } from "./SpaceAppsLogo";
 import "./AppHeader.css";
 
 export function AppHeader({ onHome, onHelp }: { onHome(): void; onHelp(): void }) {
@@ -9,8 +8,10 @@ export function AppHeader({ onHome, onHelp }: { onHome(): void; onHelp(): void }
   return (
     <header className="app-header">
       <button type="button" className="brand" onClick={onHome} title="Back to the start">
-        <SpaceAppsLogo className="brand-logo" markOnly />
-        <h1>Earth Trends Nexus</h1>
+        <svg className="brand-logo" viewBox="0 0 100 100" aria-hidden="true">
+          <path d="M50 11.25 88.75 50 50 88.75 11.25 50Z" fill="none" stroke="currentColor" strokeWidth="7.07" />
+        </svg>
+        <h1>Earth Trends <span className="brand-accent">Nexus</span></h1>
       </button>
       <div className="header-actions">
         <button type="button" onClick={onHelp}>
