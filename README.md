@@ -11,8 +11,8 @@ To go beyond NASA POWER, each variable links to NASA **Giovanni** pre-filled for
 AIRS, GPM IMERG, GLDAS…), and any time series exported from Giovanni, AppEEARS, KNMI Climate Explorer or NOAA Climate
 Data Online can be dropped into the app to run the same tests. At the 17 featured places, records that NASA POWER does
 not have are stored in the repository and tested like the others. Stored so far: OMI NO₂, SO₂ and UV index; AIRS
-outgoing long-wave radiation and cloud-top temperature; GLDAS runoff, deep soil water and snow water
-(`src/data/extras-index.json` lists them per place). See [docs/resources-assessment.md](docs/resources-assessment.md)
+outgoing long-wave radiation and cloud-top temperature; GLDAS runoff, deep soil water and snow water; MERRA-2 fine
+particles (PM2.5), dust and soot (`src/data/extras-index.json` lists them per place). See [docs/resources-assessment.md](docs/resources-assessment.md)
 for how each recommended resource was evaluated.
 
 **Live app:** https://nicholas1301.github.io/earth-trends-explorer/
@@ -94,8 +94,8 @@ period or season never refetches.
 - User-imported files from [NASA Giovanni](https://giovanni.gsfc.nasa.gov/giovanni/),
   [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/), [KNMI Climate Explorer](https://climexp.knmi.nl/) and
   [NOAA Climate Data Online](https://www.ncei.noaa.gov/cdo-web/) (read in the browser, never uploaded)
-- Featured places only, stored in `src/data/extras/`: OMI (OMNO2d, OMSO2e, OMUVBd), AIRS (AIRS3STM) and GLDAS Noah 2.1
-  monthly series via the [NASA Giovanni](https://giovanni.gsfc.nasa.gov/giovanni/) time-series API. The download
-  script also covers MERRA-2 aerosols and MODIS land products via [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/),
-  added as their downloads complete
+- Featured places only, stored in `src/data/extras/`: OMI (OMNO2d, OMSO2e, OMUVBd), AIRS (AIRS3STM), GLDAS Noah 2.1
+  and MERRA-2 hourly aerosols (M2T1NXAER, averaged per month) via the
+  [NASA Giovanni](https://giovanni.gsfc.nasa.gov/giovanni/) time-series API. The download script also covers MODIS land
+  products via [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/), added once that download completes
 - Coastlines: [Natural Earth](https://www.naturalearthdata.com) 1:110m, via the `world-atlas` package (public domain)
