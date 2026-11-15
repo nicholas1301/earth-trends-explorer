@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { THEMES, VARIABLES } from "../../config/catalog";
+import { seasonById, THEMES, VARIABLES } from "../../config/catalog";
 import { useSavedPlaces } from "../../hooks/useSavedPlaces";
 import { makePlace, samePlace } from "../../lib/places";
 import { useInvestigation } from "../../state/InvestigationContext";
 import type { Place } from "../../types";
 import { PlaceSearch } from "../setup/PlaceSearch";
+import { FiltersBar } from "./FiltersBar";
 import "../setup/PlacePicker.css";
 import "./SelectionBar.css";
 
@@ -18,11 +19,15 @@ interface Props {
   showVariable: boolean;
 }
 
-/** The investigated place (and, where relevant, variable), visible and editable on every result step. */
+/**
+ * The investigation's context — place, variable, period and time of year — visible and editable on every result step.
+ * Wide screens show every control in one compact strip; narrow screens show a one-line summary that expands on demand.
+ */
 export function SelectionBar({ showVariable }: Props) {
   const { state, actions } = useInvestigation();
   const place = state.investigation?.place ?? state.place;
   const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(false);
   const close = useCallback(() => setEditing(false), []);
 
   const choose = (p: Place) => {
@@ -34,23 +39,37 @@ export function SelectionBar({ showVariable }: Props) {
 
   if (!place) return null;
 
+  const { filters } = state;
+  const variable = showVariable ? VARIABLES.find((v) => v.id === state.variable) : undefined;
+  const summary = [variable?.name, `${filters.y0}–${filters.y1}`, seasonById(filters.season).name].filter(Boolean);
+
   return (
-    <div className="selection-bar" id="selection">
-      <div className="selection-row">
-        <div className="selection-item">
-          <span className="selection-label">Place</span>
-          <span className="selection-value">
-            <b>{place.name}</b>
-            {place.region && <span className="muted"> · {place.region}</span>}
+    <section className="selection-bar" id="selection" aria-label="Investigation settings" data-open={open}>
+      <button type="button" className="selection-summary" aria-expanded={open} aria-controls="selection-controls" onClick={() => setOpen((o) => !o)}>
+        <span className="selection-summary-text">
+          <b>{place.name}</b>
+          {summary.map((s) => <span key={s}> · {s}</span>)}
+        </span>
+        <span className="selection-summary-action">{open ? "Done" : "Edit"}</span>
+      </button>
+
+      <div className="selection-controls" id="selection-controls">
+        <div className="ctl ctl-place">
+          <span className="ctl-label">Place</span>
+          <span className="ctl-input">
+            <span className="selection-value">
+              <b>{place.name}</b>
+              {place.region && <span className="muted"> · {place.region}</span>}
+            </span>
+            <button type="button" className="link" aria-expanded={editing} aria-controls="selection-place" onClick={() => setEditing((e) => !e)}>
+              {editing ? "Cancel" : "Change"}
+            </button>
           </span>
-          <button type="button" className="link" aria-expanded={editing} aria-controls="selection-place" onClick={() => setEditing((e) => !e)}>
-            {editing ? "Cancel" : "Change"}
-          </button>
         </div>
 
         {showVariable && (
-          <label className="selection-item">
-            <span className="selection-label">Variable</span>
+          <label className="ctl ctl-variable">
+            <span className="ctl-label">Variable</span>
             <select value={state.variable ?? ""} onChange={(e) => actions.selectVariable(e.target.value)}>
               {VARIABLE_GROUPS.map(({ theme, variables }) => (
                 <optgroup key={theme.id} label={theme.name}>
@@ -62,10 +81,12 @@ export function SelectionBar({ showVariable }: Props) {
             </select>
           </label>
         )}
-      </div>
 
-      {editing && <PlaceEditor current={place} onChoose={choose} onMap={() => { setEditing(false); actions.goTo("place"); }} onClose={close} />}
-    </div>
+        <FiltersBar />
+
+        {editing && <PlaceEditor current={place} onChoose={choose} onMap={() => { setEditing(false); actions.goTo("place"); }} onClose={close} />}
+      </div>
+    </section>
   );
 }
 

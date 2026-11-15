@@ -82,6 +82,22 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
   const doneCount = status.tasks.filter(Boolean).length;
   const label = `Challenge · ${LEVEL_NAMES[challenge.level]}`;
 
+  const tasks = (
+    <ul className="challenge-tasks">
+      {challenge.tasks.map((t, i) => (
+        <li key={t.label} className={status.tasks[i] ? "done" : undefined}>
+          <span aria-hidden="true">{status.tasks[i] ? "✓" : "○"}</span>
+          {t.label}
+          {t.place && !status.tasks[i] && (
+            <button type="button" className="link challenge-go" onClick={() => goToPlace(t.place!)}>
+              {state.step === "place" ? "Choose it" : "Go there"}
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+
   if (collapsed) {
     return (
       <button type="button" className="challenge-pill" onClick={() => setCollapsed(false)} aria-label={`Show challenge: ${challenge.title}`}>
@@ -92,28 +108,29 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
 
   return (
     <aside className="challenge-card" aria-label="Challenge">
+      {/* The header never scrolls away: minimizing is how the user uncovers a chart the card hides. */}
       <div className="challenge-head">
         <span className="challenge-label">{label}</span>
         <span className="row challenge-head-actions">
-          <button type="button" className="link" onClick={() => setCollapsed(true)}>Minimize</button>
+          <button type="button" className="challenge-minimize" onClick={() => setCollapsed(true)} aria-label="Minimize challenge">
+            <span aria-hidden="true">▾</span> Minimize
+          </button>
           <button type="button" className="link" onClick={onClose}>Quit</button>
         </span>
       </div>
+
+      <div className="challenge-body">
       <b className="challenge-title">{challenge.title}</b>
 
-      <ul className="challenge-tasks">
-        {challenge.tasks.map((t, i) => (
-          <li key={t.label} className={status.tasks[i] ? "done" : undefined}>
-            <span aria-hidden="true">{status.tasks[i] ? "✓" : "○"}</span>
-            {t.label}
-            {t.place && !status.tasks[i] && (
-              <button type="button" className="link challenge-go" onClick={() => goToPlace(t.place!)}>
-                {state.step === "place" ? "Choose it" : "Go there"}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+      {status.ready ? (
+        // Every task done: fold the list so the question gets the room.
+        <details className="challenge-tasks-done">
+          <summary><span aria-hidden="true">✓</span> All {status.tasks.length} tasks done</summary>
+          {tasks}
+        </details>
+      ) : (
+        tasks
+      )}
 
       {solved != null ? (
         <div className="challenge-solved" role="status">
@@ -153,6 +170,7 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
           <span />
         )}
         {solved != null && (onNext ? <button type="button" className="primary" onClick={onNext}>Next challenge →</button> : <button type="button" className="primary" onClick={onClose}>Done</button>)}
+      </div>
       </div>
     </aside>
   );

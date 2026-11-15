@@ -10,7 +10,6 @@ import { SpaceAppsLogo } from "./components/layout/SpaceAppsLogo";
 import { Stepper } from "./components/layout/Stepper";
 import { AnalysisSection } from "./components/results/AnalysisSection";
 import { ClueBoard } from "./components/results/ClueBoard";
-import { FiltersBar } from "./components/results/FiltersBar";
 import { ImportSection } from "./components/results/ImportSection";
 import { SelectionBar } from "./components/results/SelectionBar";
 import { WhereSection } from "./components/results/WhereSection";
@@ -87,10 +86,7 @@ export function App() {
 
         {isResult && analysis && (
           <div className={`stack${state.loading ? " dimmed" : ""}`}>
-            <div className="result-controls">
-              <SelectionBar showVariable={step !== "clues"} />
-              <FiltersBar />
-            </div>
+            <SelectionBar showVariable={step !== "clues"} />
             {step === "clues" && (
               <ClueBoard
                 analysis={analysis}
