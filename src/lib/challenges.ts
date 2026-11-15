@@ -1,5 +1,6 @@
-import type { Filters, Place, PointData, ThemeId, Variable } from "../types";
+import type { Filters, Place, PointData, Step, ThemeId, Variable, WhereTab } from "../types";
 import type { Scan } from "./clues";
+import type { RegionSummary, WorldSummary } from "./compareResults";
 
 /** What a challenge can see: the investigation currently on screen. Answers are always derived from it, never stored. */
 export interface ChallengeView {
@@ -10,6 +11,12 @@ export interface ChallengeView {
   data: PointData;
   scan: Scan;
   ranked: Variable[];
+  /** Screen on view, and which comparison is shown on the Compare step. */
+  step: Step;
+  whereTab: WhereTab;
+  /** What the Compare step found for this investigation, variable and filters; null until it has loaded. */
+  region: RegionSummary | null;
+  world: WorldSummary | null;
 }
 
 /** One thing the user has to do in the tool; ticked automatically. */

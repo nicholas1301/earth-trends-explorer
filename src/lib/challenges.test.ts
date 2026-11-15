@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FIRST_YEAR, LAST_YEAR, PRESETS, VARIABLES } from "../config/catalog";
-import { CHALLENGES, FAST_WARMING } from "../config/challenges";
+import { CHALLENGES, FAST_WARMING, MIN_WORLD_PLACES } from "../config/challenges";
 import type { Filters, MonthlyGrid, PointData } from "../types";
 import { evaluateChallenge, parseProgress, withCompleted, withScore, type ChallengeView } from "./challenges";
 import { rankVariables, scanVariables } from "./clues";
@@ -22,7 +22,7 @@ function makeView(placeName: string | null, variable: string | null, grids: Reco
   const data: PointData = Object.fromEntries(VARIABLES.map((v) => [v.id, grids[v.id] ?? trendGrid(0)]));
   const scan = scanVariables(data, filters);
   const place = placeName ? placeFromPreset(PRESETS.find((p) => p.name === placeName)!) : makePlace(70.3, 100.2);
-  return { place, variable, filters, data, scan, ranked: rankVariables(scan) };
+  return { place, variable, filters, data, scan, ranked: rankVariables(scan), step: "verdict", whereTab: "region", region: null, world: null };
 }
 
 const byId = (id: string) => CHALLENGES.find((c) => c.id === id)!;
@@ -106,6 +106,62 @@ describe("sahel-rain", () => {
     expect(early.explain).toContain("a significant increase"); // the whole record
     const rising = c.quiz!(makeView("Niamey", "PRECTOTCORR", { PRECTOTCORR: trendGrid(0.5) }, { ...FULL, y1: 2000 }))!;
     expect(rising.correct).toBe(0);
+  });
+});
+
+describe("aral-around", () => {
+  const c = byId("aral-around");
+  const SUN = "ALLSKY_SFC_SW_DWN";
+  const onCompare = (point: number, areaMean: number, tab: "region" | "world" = "region") => ({
+    ...makeView("Aral Sea", SUN, { [SUN]: trendGrid(point) }),
+    step: "compare" as const,
+    whereTab: tab,
+    region: { investigationId: 1, variable: SUN, filters: FULL, n: 100, up: 20, down: 80, sigUp: 0, sigDown: 50, areaMean },
+  });
+
+  it("needs the Around here map to be open", () => {
+    expect(evaluateChallenge(c, makeView("Aral Sea", SUN, {})).tasks).toEqual([true, true, false]);
+    expect(evaluateChallenge(c, onCompare(-0.9, -0.2, "world")).ready).toBe(false);
+    expect(evaluateChallenge(c, onCompare(-0.9, -0.2)).ready).toBe(true);
+  });
+
+  it("compares the point with the area mean", () => {
+    expect(c.quiz!(onCompare(-0.9, -0.2))!.correct).toBe(0);
+    expect(c.quiz!(onCompare(-0.9, -0.8))!.correct).toBe(1);
+    expect(c.quiz!(onCompare(-0.2, -0.9))!.correct).toBe(2);
+    expect(c.quiz!(onCompare(0.9, -0.2))!.correct).toBe(0);
+  });
+
+  it("has no question before the area has loaded", () => {
+    expect(c.quiz!({ ...onCompare(-0.9, -0.2), region: null })).toBeNull();
+  });
+});
+
+describe("world-fastest", () => {
+  const c = byId("world-fastest");
+  const world = (rates: number[]) => ({
+    ...makeView("Svalbard", "T2M", {}),
+    step: "compare" as const,
+    whereTab: "world" as const,
+    world: {
+      investigationId: 1,
+      variable: "T2M",
+      filters: FULL,
+      places: rates.map((r, i) => ({ name: `Place ${String.fromCharCode(65 + i)}`, perDecade: r, significant: true, isCurrent: i === 2 })),
+    },
+  });
+
+  it("needs enough places on the comparison", () => {
+    expect(evaluateChallenge(c, world([0.9, 0.5])).tasks).toEqual([true, true, false]);
+    expect(evaluateChallenge(c, world([0.9, 0.7, 0.5, 0.3, 0.1])).ready).toBe(true);
+    expect(MIN_WORLD_PLACES).toBeGreaterThan(2);
+  });
+
+  it("asks for the leader of the ranking", () => {
+    const quiz = c.quiz!(world([0.9, 0.7, 0.5, 0.4, 0.3, 0.2, 0.1]))!;
+    expect(quiz.options[quiz.correct]).toBe("Place A");
+    expect(quiz.options).toHaveLength(4);
+    expect(quiz.explain).toContain("ranks 3 of 7");
   });
 });
 

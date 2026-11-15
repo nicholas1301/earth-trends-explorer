@@ -56,6 +56,17 @@ const period = (v: ChallengeView) => `${v.filters.y0}–${v.filters.y1}`;
 /** “a significant increase” / “no significant trend” / “a significant decrease”, as an option index. */
 const verdictIndex = (r: TrendOk) => (!isSignificant(r) ? 1 : r.direction > 0 ? 0 : 2);
 
+const compareTab = (tab: "region" | "world"): Task => ({
+  label: `Open Compare → ${tab === "region" ? "Around here" : "Across the world"}`,
+  done: (v) => v.step === "compare" && v.whereTab === tab && (tab === "region" ? !!v.region : !!v.world),
+});
+
+/** Places the world comparison needs before its ranking says anything. */
+export const MIN_WORLD_PLACES = 4;
+
+/** A point whose change is this many times the area mean counts as a local story. */
+const LOCAL_RATIO = 1.5;
+
 // ---- The challenges ----
 
 export const CHALLENGES: Challenge[] = [
@@ -180,6 +191,73 @@ export const CHALLENGES: Challenge[] = [
           `With ${period(v)} alone the test finds ${words[verdictIndex(r)]} (${rate(r, "PRECTOTCORR")}). ` +
           (full ? `With the whole record, ${FIRST_YEAR}–${LAST_YEAR}, it finds ${words[verdictIndex(full)]} (${rate(full, "PRECTOTCORR")}). ` : "") +
           "Rain varies a lot from year to year, so a real change can stay hidden until enough years of data pile up. Set the period back to the full record and compare.",
+      };
+    },
+  },
+  {
+    id: "aral-around",
+    level: "detective",
+    theme: "sun",
+    title: "Local or regional at the Aral Sea?",
+    summary: "Zoom out: is the change at the point stronger than in the area around it?",
+    tasks: [investigate(PLACES.aral), open("ALLSKY_SFC_SW_DWN"), compareTab("region")],
+    hint:
+      "The verdict gives the change at the point (hover the ringed cell to see it again). On the Compare step, “Around here” maps the " +
+      "10° box around the point, and the sentence beside the map gives the mean of the whole area. Minimize this card to read it.",
+    quiz(v) {
+      const here = ok(v.scan.ALLSKY_SFC_SW_DWN);
+      const area = v.region?.areaMean;
+      if (!here || area == null) return null;
+      const point = perDecade(here);
+      const ratio = area === 0 ? Infinity : point / area;
+      // Opposite directions: compare sizes only.
+      const correct = ratio < 0 ? (Math.abs(point) > Math.abs(area) ? 0 : 2) : ratio > LOCAL_RATIO ? 0 : ratio >= 1 / LOCAL_RATIO ? 1 : 2;
+      const unit = VARIABLE_BY_ID.ALLSKY_SFC_SW_DWN;
+      return {
+        question: "Compared with the area around it, how big is the change in sunlight at the Aral Sea?",
+        options: ["Much bigger than the area average", "About the same as the area average", "Smaller than the area average"],
+        correct,
+        explain:
+          `At the point: ${rate(here, "ALLSKY_SFC_SW_DWN")}. Mean of the whole area: ${formatSigned(area, unit.digits)} ${unit.unit} per decade. ` +
+          (correct === 0
+            ? "The change is concentrated where the lake used to be — a local story, so look for a local cause: the lake bed dried out, and the clouds and dust above it changed. "
+            : "The point changes like its surroundings — a regional story, so the cause is probably bigger than the lake. ") +
+          "Comparing a point with the area around it is how a detective tells local causes from regional ones.",
+      };
+    },
+  },
+  {
+    id: "world-fastest",
+    level: "detective",
+    theme: "heat",
+    title: "Which of your places warms fastest?",
+    summary: "Line up your saved places and read the ranking.",
+    tasks: [
+      open("T2M"),
+      compareTab("world"),
+      { label: `Compare at least ${MIN_WORLD_PLACES} places`, done: (v) => (v.world?.places.length ?? 0) >= MIN_WORLD_PLACES },
+    ],
+    hint:
+      "“Across the world” shows the same variable at each of your saved places, with the fastest rise at the top of the bars. " +
+      "If the list is short, add places with ☆ Save on step 1 (Place).",
+    quiz(v) {
+      const list = v.world?.places;
+      if (!list || list.length < MIN_WORLD_PLACES) return null;
+      const top = list[0];
+      // The leader plus three others spread along the ranking, so the answer has to be read, not guessed.
+      const picks = [0, Math.round(list.length / 3), Math.round((2 * list.length) / 3), list.length - 1];
+      const options = [...new Set(picks.map((i) => list[i].name))].sort();
+      if (options.length < 2) return null;
+      const here = list.findIndex((p) => p.isCurrent);
+      const fmt = (x: number) => `${formatSigned(x, VARIABLE_BY_ID.T2M.digits)} °C per decade`;
+      return {
+        question: `Among the ${list.length} places compared, which one has the fastest-rising air temperature?`,
+        options,
+        correct: options.indexOf(top.name),
+        explain:
+          `${top.name} leads with ${fmt(top.perDecade)}${top.significant ? "" : " (not significant)"}, against ${fmt(list[list.length - 1].perDecade)} at ${list[list.length - 1].name}. ` +
+          (here > 0 ? `${list[here].name}, the place you investigated, ranks ${here + 1} of ${list.length}. ` : "") +
+          "Warming is global but uneven: high latitudes and continents usually climb fastest, oceans and the tropics more slowly.",
       };
     },
   },

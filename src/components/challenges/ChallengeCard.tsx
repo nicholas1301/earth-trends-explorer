@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useChallengeProgress } from "../../hooks/useChallengeProgress";
+import { isCurrentSummary, useCompareResults } from "../../lib/compareResults";
 import { LEVEL_NAMES, evaluateChallenge, type Challenge, type ChallengeView } from "../../lib/challenges";
 import { formatSigned } from "../../lib/format";
 import { useInvestigation } from "../../state/InvestigationContext";
@@ -26,14 +27,24 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
   /** Explanation frozen at the moment the challenge was solved, so it survives further exploring. */
   const [solved, setSolved] = useState<string | null>(null);
 
-  const { investigation, variable, filters } = state;
-  const view = useMemo<ChallengeView | null>(
-    () =>
-      investigation && analysis
-        ? { place: investigation.place, variable, filters, data: investigation.data, scan: analysis.scan, ranked: analysis.ranked }
-        : null,
-    [investigation, analysis, variable, filters],
-  );
+  const { investigation, variable, filters, step, whereTab } = state;
+  const compare = useCompareResults();
+  const view = useMemo<ChallengeView | null>(() => {
+    if (!investigation || !analysis) return null;
+    const fresh = <T extends Parameters<typeof isCurrentSummary>[0]>(s: T) => (isCurrentSummary(s, investigation.id, variable, filters) ? s : null);
+    return {
+      place: investigation.place,
+      variable,
+      filters,
+      data: investigation.data,
+      scan: analysis.scan,
+      ranked: analysis.ranked,
+      step,
+      whereTab,
+      region: fresh(compare.region),
+      world: fresh(compare.world),
+    };
+  }, [investigation, analysis, variable, filters, step, whereTab, compare]);
   const status = useMemo(() => evaluateChallenge(challenge, view), [challenge, view]);
   const quiz = useMemo(() => (status.ready && view && challenge.quiz ? challenge.quiz(view) : null), [status.ready, view, challenge]);
   const score = status.ready && view && challenge.score ? challenge.score.value(view) : null;

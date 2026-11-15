@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { seasonById } from "../../config/catalog";
 import { divergingColor, warmPoleSign } from "../../lib/colors";
 import { formatCoord, formatNumber, formatPValue, formatSigned } from "../../lib/format";
+import { publishCompare } from "../../lib/compareResults";
 import { LAND_PATH } from "../../lib/geo";
 import { fetchRegion, type BoundingBox, type GridCell } from "../../lib/powerApi";
 import { clamp, mannKendall } from "../../lib/stats";
@@ -73,6 +74,15 @@ export function RegionalTrendMap({ variable: v }: { variable: Variable }) {
 
   const { data: cells, error, loading, retry } = useAsync(() => fetchRegion(box, v.id), [v.id, box.latMin, box.lonMin]);
   const region = useMemo(() => (cells ? analyzeRegion(cells, state.filters) : null), [cells, state.filters]);
+  const investigationId = state.investigation!.id;
+
+  // Shared with the challenge card, which can ask about what the map shows.
+  useEffect(() => {
+    if (!region || loading) return;
+    const { n, up, down, sigUp, sigDown, areaMean } = region;
+    publishCompare("region", { investigationId, variable: v.id, filters: state.filters, n, up, down, sigUp, sigDown, areaMean: areaMean ? areaMean.sen * 10 : null });
+  }, [region, loading, investigationId, v.id, state.filters]);
+  useEffect(() => () => publishCompare("region", null), []);
 
   if (error) return <ErrorMessage onRetry={retry}>Could not download the grid ({error}).</ErrorMessage>;
   if (!region) {

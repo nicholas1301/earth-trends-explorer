@@ -1,6 +1,7 @@
-import { useMemo, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import { seasonById } from "../../config/catalog";
 import { directionColor, divergingColor, warmPoleSign } from "../../lib/colors";
+import { publishCompare } from "../../lib/compareResults";
 import { formatSigned } from "../../lib/format";
 import { samePlace } from "../../lib/places";
 import { fetchPoint } from "../../lib/powerApi";
@@ -83,6 +84,18 @@ export function WorldComparison({ variable: v }: { variable: Variable }) {
     const max = Math.max(...ok.map((p) => Math.abs(perDecade(p.result)))) || 1;
     return { ok, missing, max };
   }, [places, state.filters]);
+
+  // Shared with the challenge card, which can ask about the ranking.
+  useEffect(() => {
+    if (!comparison) return;
+    publishCompare("world", {
+      investigationId: investigation.id,
+      variable: v.id,
+      filters: state.filters,
+      places: comparison.ok.map((p) => ({ name: p.name, perDecade: perDecade(p.result), significant: isSignificant(p.result), isCurrent: p.isCurrent })),
+    });
+  }, [comparison, investigation.id, v.id, state.filters]);
+  useEffect(() => () => publishCompare("world", null), []);
 
   if (!comparison) return <Loading>Querying {progress} of {total} places…</Loading>;
 
