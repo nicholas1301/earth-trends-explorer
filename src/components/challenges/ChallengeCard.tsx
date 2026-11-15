@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useChallengeProgress } from "../../hooks/useChallengeProgress";
 import { isCurrentSummary, useCompareResults } from "../../lib/compareResults";
-import { LEVEL_NAMES, evaluateChallenge, type Challenge, type ChallengeView } from "../../lib/challenges";
+import { LEVEL_NAMES, evaluateChallenge, recordPlaceLabel, type Challenge, type ChallengeView } from "../../lib/challenges";
 import { formatSigned } from "../../lib/format";
 import { useInvestigation } from "../../state/InvestigationContext";
 import type { Place } from "../../types";
@@ -54,8 +54,8 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
     if (!status.ready || challenge.quiz) return;
     complete(challenge.id);
     setSolved(challenge.explain ?? "");
-    if (score != null) recordScore(challenge.id, score);
-  }, [status.ready, score, challenge, complete, recordScore]);
+    if (score != null && view) recordScore(challenge.id, score, view.place);
+  }, [status.ready, score, challenge, complete, recordScore]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The wrong picks belong to one question; a new investigation or filter starts over.
   useEffect(() => setWrong([]), [quiz?.question, quiz?.correct]);
@@ -78,6 +78,7 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
   };
 
   const best = progress.best[challenge.id];
+  const bestAt = progress.bestAt[challenge.id];
   const doneCount = status.tasks.filter(Boolean).length;
   const label = `Challenge · ${LEVEL_NAMES[challenge.level]}`;
 
@@ -138,6 +139,7 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
       {challenge.score && best != null && (
         <p className="challenge-score">
           {challenge.score.label}: <b>{formatSigned(best, challenge.score.digits)} {challenge.score.unit}</b>
+          {bestAt && <> at {recordPlaceLabel(bestAt)}</>}
           {score != null && score < best && <> · here: {formatSigned(score, challenge.score.digits)}</>}
         </p>
       )}
@@ -155,3 +157,4 @@ export function ChallengeCard({ challenge, onClose, onNext }: Props) {
     </aside>
   );
 }
+

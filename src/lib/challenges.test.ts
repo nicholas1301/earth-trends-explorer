@@ -191,16 +191,22 @@ describe("record-hunt", () => {
 
 describe("progress", () => {
   it("parses stored progress defensively", () => {
-    expect(parseProgress(null)).toEqual({ done: [], best: {} });
-    expect(parseProgress("not json")).toEqual({ done: [], best: {} });
-    expect(parseProgress('{"done":["a","a",3],"best":{"a":1.5,"b":"x"}}')).toEqual({ done: ["a"], best: { a: 1.5 } });
+    expect(parseProgress(null)).toEqual({ done: [], best: {}, bestAt: {} });
+    expect(parseProgress("not json")).toEqual({ done: [], best: {}, bestAt: {} });
+    expect(parseProgress('{"done":["a","a",3],"best":{"a":1.5,"b":"x"}}')).toEqual({ done: ["a"], best: { a: 1.5 }, bestAt: {} });
+    expect(parseProgress('{"done":[],"best":{"a":1.5},"bestAt":{"a":{"name":"Yakutsk","lat":62,"lon":129.7},"b":{"name":"x","lat":0,"lon":0}}}').bestAt).toEqual({
+      a: { name: "Yakutsk", lat: 62, lon: 129.7 },
+    });
   });
 
   it("completes once and keeps the best score", () => {
-    const p = withCompleted(withCompleted({ done: [], best: {} }, "a"), "a");
+    const p = withCompleted(withCompleted({ done: [], best: {}, bestAt: {} }, "a"), "a");
     expect(p.done).toEqual(["a"]);
-    const scored = withScore(withScore(withScore(p, "a", 0.7), "a", 0.5), "a", 0.9);
+    const yakutsk = { name: "Yakutsk", lat: 62, lon: 129.7 };
+    const scored = withScore(withScore(withScore(p, "a", 0.7, yakutsk), "a", 0.5, { name: "Lima", lat: -12, lon: -77 }), "a", 0.9);
     expect(scored.best.a).toBe(0.9);
+    expect(scored.bestAt.a).toBeUndefined(); // the new record has no place: don't keep the old one
+    expect(withScore(p, "a", 0.7, yakutsk).bestAt.a).toEqual(yakutsk);
   });
 });
 

@@ -2,7 +2,7 @@ import { FIRST_YEAR, LAST_YEAR, VARIABLES } from "../../config/catalog";
 import { CHALLENGES } from "../../config/challenges";
 import { DEMOS } from "../../config/demos";
 import { useChallengeProgress } from "../../hooks/useChallengeProgress";
-import { LEVEL_NAMES } from "../../lib/challenges";
+import { LEVEL_NAMES, recordPlaceLabel } from "../../lib/challenges";
 import { formatSigned } from "../../lib/format";
 import { ThemeIcon } from "../ui/ThemeIcon";
 import "./Home.css";
@@ -70,6 +70,7 @@ export function Home({ onStart, onStartDemo, onStartChallenge, onImport }: Props
               {c.score && progress.best[c.id] != null && (
                 <span>
                   {c.score.label}: {formatSigned(progress.best[c.id], c.score.digits)} {c.score.unit}
+                  {progress.bestAt[c.id] && <> at {recordPlaceLabel(progress.bestAt[c.id])}</>}
                 </span>
               )}
               <span className="go">{isDone(c.id) ? "Play again →" : "Take the challenge →"}</span>

@@ -1,5 +1,7 @@
 import type { Filters, Place, PointData, Step, ThemeId, Variable, WhereTab } from "../types";
 import type { Scan } from "./clues";
+import { formatCoord } from "./format";
+import { DEFAULT_PLACE_LABEL } from "./places";
 import type { RegionSummary, WorldSummary } from "./compareResults";
 
 /** What a challenge can see: the investigation currently on screen. Answers are always derived from it, never stored. */
@@ -70,25 +72,43 @@ export function evaluateChallenge(challenge: Challenge, view: ChallengeView | nu
 
 // ---- Progress (which challenges were solved, personal records) ----
 
+/** Where a personal record was set. */
+export interface RecordPlace {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface ChallengeProgress {
   done: string[];
   best: Record<string, number>;
+  /** Place of each record in `best`; missing for records saved before places were kept. */
+  bestAt: Record<string, RecordPlace>;
 }
 
 /** localStorage key; bump the suffix if the stored shape ever changes. */
 export const CHALLENGES_KEY = "challenges-v1";
-const EMPTY: ChallengeProgress = { done: [], best: {} };
+const EMPTY: ChallengeProgress = { done: [], best: {}, bestAt: {} };
 
 export function parseProgress(raw: string | null): ChallengeProgress {
   if (raw == null) return EMPTY;
   try {
-    const data = JSON.parse(raw) as { done?: unknown; best?: unknown };
+    const data = JSON.parse(raw) as { done?: unknown; best?: unknown; bestAt?: unknown };
     const done = Array.isArray(data?.done) ? [...new Set(data.done.filter((x): x is string => typeof x === "string"))] : [];
     const best: Record<string, number> = {};
     if (data?.best && typeof data.best === "object") {
       for (const [id, value] of Object.entries(data.best)) if (typeof value === "number" && isFinite(value)) best[id] = value;
     }
-    return { done, best };
+    const bestAt: Record<string, RecordPlace> = {};
+    if (data?.bestAt && typeof data.bestAt === "object") {
+      for (const [id, at] of Object.entries(data.bestAt as Record<string, unknown>)) {
+        const a = at as Partial<RecordPlace> | null;
+        if (id in best && a && typeof a.name === "string" && Number.isFinite(a.lat) && Number.isFinite(a.lon)) {
+          bestAt[id] = { name: a.name, lat: a.lat!, lon: a.lon! };
+        }
+      }
+    }
+    return { done, best, bestAt };
   } catch {
     return EMPTY;
   }
@@ -97,9 +117,20 @@ export function parseProgress(raw: string | null): ChallengeProgress {
 export const withCompleted = (p: ChallengeProgress, id: string): ChallengeProgress =>
   p.done.includes(id) ? p : { ...p, done: [...p.done, id] };
 
-/** Keeps the highest score seen for a challenge. */
-export const withScore = (p: ChallengeProgress, id: string, value: number): ChallengeProgress =>
-  p.best[id] != null && p.best[id] >= value ? p : { ...p, best: { ...p.best, [id]: value } };
+/** Keeps the highest score seen for a challenge, with the place where it was set. */
+export function withScore(p: ChallengeProgress, id: string, value: number, at?: RecordPlace): ChallengeProgress {
+  if (p.best[id] != null && p.best[id] >= value) return p;
+  const bestAt = { ...p.bestAt };
+  if (at) bestAt[id] = { name: at.name, lat: at.lat, lon: at.lon };
+  else delete bestAt[id];
+  return { ...p, best: { ...p.best, [id]: value }, bestAt };
+}
+
+/** Name of the place where a record was set, with coordinates; just coordinates for unnamed points (e.g. over the ocean). */
+export function recordPlaceLabel(at: RecordPlace): string {
+  const coords = formatCoord(at.lat, at.lon);
+  return at.name && at.name !== DEFAULT_PLACE_LABEL ? `${at.name} (${coords})` : coords;
+}
 
 // ---- Shared store: one progress record for every component and browser tab ----
 
