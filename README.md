@@ -1,8 +1,8 @@
-# earth-trends-explorer
+# Earth Trends Nexus
 
 Submission for NASA's Space Apps Challenge 2026. Theme: "Be An Earth System Trend Detective!".
 
-**Earth Trends Detective** downloads decades of monthly NASA POWER data (MERRA-2 reanalysis and CERES satellite
+**Earth Trends Nexus** downloads decades of monthly NASA POWER data (MERRA-2 reanalysis and CERES satellite
 products, 1981 to today) for any point on Earth, tests 20 variables for statistically significant trends
 (Mann-Kendall + Sen's slope, and OLS with an autocorrelation-corrected t-test) and helps you explore where and
 when the change happens.
