@@ -97,5 +97,5 @@ period or season never refetches.
 - Featured places only, stored in `src/data/extras/`: OMI (OMNO2d, OMSO2e, OMUVBd), AIRS (AIRS3STM), GLDAS Noah 2.1
   and MERRA-2 hourly aerosols (M2T1NXAER, averaged per month) via the
   [NASA Giovanni](https://giovanni.gsfc.nasa.gov/giovanni/) time-series API. The download script also covers MODIS land
-  products via [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/), added once that download completes
+  products via [NASA AppEEARS](https://appeears.earthdatacloud.nasa.gov/); those are not stored yet
 - Coastlines: [Natural Earth](https://www.naturalearthdata.com) 1:110m, via the `world-atlas` package (public domain)
